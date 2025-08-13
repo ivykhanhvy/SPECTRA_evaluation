@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="e3f746df-1270-42e0-b887-1e1b1fcf4cba" name="Changes" comment="Retry push with selected files only">
+      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/SAGE_Lab.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.ipynb_checkpoints/PandasNote-checkpoint.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.ipynb_checkpoints/RDKitNote-checkpoint.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.ipynb_checkpoints/Untitled-checkpoint.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=1-step=1028.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=10-step=209.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=12-step=247.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=10060.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=10280-v1.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=10280.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=1060-v1.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=1060.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=1160.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=160-v1.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=160.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=180.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=280.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=300-v1.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=300.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=380-v1.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=380-v2.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=380-v3.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=380-v4.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=380-v5.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=380-v6.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=380.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=420.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=520-v1.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=520.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=19-step=560.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/checkpoints/epoch=4-step=2515.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/spectra_splits.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/splits.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bace_classification/bace_classification_scaffold_test_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bace_classification/bace_classification_scaffold_test_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bace_classification/bace_classification_scaffold_test_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bace_classification/bace_classification_scaffold_test_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bace_classification/bace_classification_scaffold_test_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bace_classification/bace_classification_scaffold_train_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bace_classification/bace_classification_scaffold_train_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bace_classification/bace_classification_scaffold_train_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bace_classification/bace_classification_scaffold_train_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bace_classification/bace_classification_scaffold_train_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bbbp/bbbp_scaffold_test_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bbbp/bbbp_scaffold_test_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bbbp/bbbp_scaffold_test_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bbbp/bbbp_scaffold_test_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bbbp/bbbp_scaffold_test_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bbbp/bbbp_scaffold_train_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bbbp/bbbp_scaffold_train_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bbbp/bbbp_scaffold_train_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bbbp/bbbp_scaffold_train_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/bbbp/bbbp_scaffold_train_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/clintox/clintox_scaffold_test_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/clintox/clintox_scaffold_test_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/clintox/clintox_scaffold_test_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/clintox/clintox_scaffold_test_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/clintox/clintox_scaffold_test_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/clintox/clintox_scaffold_train_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/clintox/clintox_scaffold_train_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/clintox/clintox_scaffold_train_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/clintox/clintox_scaffold_train_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/clintox/clintox_scaffold_train_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/delaney/delaney_scaffold_test_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/delaney/delaney_scaffold_test_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/delaney/delaney_scaffold_test_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/delaney/delaney_scaffold_test_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/delaney/delaney_scaffold_test_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/delaney/delaney_scaffold_train_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/delaney/delaney_scaffold_train_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/delaney/delaney_scaffold_train_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/delaney/delaney_scaffold_train_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/delaney/delaney_scaffold_train_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/freesolv/freesolv_scaffold_test_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/freesolv/freesolv_scaffold_test_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/freesolv/freesolv_scaffold_test_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/freesolv/freesolv_scaffold_test_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/freesolv/freesolv_scaffold_test_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/freesolv/freesolv_scaffold_train_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/freesolv/freesolv_scaffold_train_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/freesolv/freesolv_scaffold_train_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/freesolv/freesolv_scaffold_train_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/freesolv/freesolv_scaffold_train_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/hiv/hiv_scaffold_test_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/hiv/hiv_scaffold_test_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/hiv/hiv_scaffold_test_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/hiv/hiv_scaffold_test_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/hiv/hiv_scaffold_test_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/hiv/hiv_scaffold_train_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/hiv/hiv_scaffold_train_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/hiv/hiv_scaffold_train_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/hiv/hiv_scaffold_train_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/hiv/hiv_scaffold_train_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/lipo/lipo_scaffold_test_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/lipo/lipo_scaffold_test_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/lipo/lipo_scaffold_test_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/lipo/lipo_scaffold_test_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/lipo/lipo_scaffold_test_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/lipo/lipo_scaffold_train_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/lipo/lipo_scaffold_train_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/lipo/lipo_scaffold_train_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/lipo/lipo_scaffold_train_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/lipo/lipo_scaffold_train_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/sider/sider_scaffold_test_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/sider/sider_scaffold_test_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/sider/sider_scaffold_test_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/sider/sider_scaffold_test_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/sider/sider_scaffold_test_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/sider/sider_scaffold_train_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/sider/sider_scaffold_train_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/sider/sider_scaffold_train_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/sider/sider_scaffold_train_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/sider/sider_scaffold_train_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/tox21/tox21_scaffold_test_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/tox21/tox21_scaffold_test_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/tox21/tox21_scaffold_test_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/tox21/tox21_scaffold_test_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/tox21/tox21_scaffold_test_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/tox21/tox21_scaffold_train_split_0.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/tox21/tox21_scaffold_train_split_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/tox21/tox21_scaffold_train_split_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/tox21/tox21_scaffold_train_split_3.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/scaffold/tox21/tox21_scaffold_train_split_4.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/random/bace_classification_random_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/random/bbbp_random_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/random/delaney_random_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/random/freesolv_random_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/random/hiv_random_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/random/lipo_random_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/scaffold/bace_classification_scaffold_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/scaffold/bbbp_scaffold_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/scaffold/delaney_scaffold_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/scaffold/freesolv_scaffold_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/scaffold/hiv_scaffold_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/scaffold/lipo_scaffold_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/umap/bace_classification_umap_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/umap/bbbp_umap_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/umap/delaney_umap_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/umap/freesolv_umap_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/umap/hiv_umap_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/metrics/chemprop/umap/lipo_umap_metrics.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/notebook/checkpoints/epoch=19-step=380.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/notebook/checkpoints/epoch=19-step=397.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/notebook/checkpoints/epoch=49-step=950.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/notebook/checkpoints/epoch=99-step=1900.ckpt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/notebook/random_scaffold_umap_splits.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/notebook/spectra_hamming_splits.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/notebook/spectra_tanimoto_splits.ipynb" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ChangesViewManager" show_ignored="true">
+    <option name="groupingKeys">
+      <option value="directory" />
+      <option value="repository" />
+    </option>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Jupyter Notebook" />
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="PUSH_AUTO_UPDATE" value="true" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="ROOT_SYNC" value="SYNC" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;ivykhanhvy&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/ivykhanhvy/SPECTRA_evaluation.git",
+    "accountId": "b340139f-da6e-436f-9c05-f37f066b8934"
+  }
+}]]></component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
+  <component name="ProjectId" id="30ZVUIvuHFkTXiuNiB4iT1Unoi6" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.chemprop_retrain.executor": "Run",
+    "Python.spectra_splits.executor": "Run",
+    "Python.splits.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "/Users/ivymac/Desktop/SAGE_Lab",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "project.propVCSSupport.DirectoryMappings",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RunManager">
+    <configuration name="splits" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="SAGE_Lab" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/code" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/code/splits.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.splits" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-09060db00ec0-JavaScript-PY-251.26927.90" />
+        <option value="bundled-python-sdk-41e8cd69c857-64d779b69b7a-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-251.26927.90" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="e3f746df-1270-42e0-b887-1e1b1fcf4cba" name="Changes" comment="" />
+      <created>1753835096073</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1753835096073</updated>
+      <workItem from="1753835097269" duration="2438000" />
+      <workItem from="1753837561163" duration="7465000" />
+      <workItem from="1753913783949" duration="10879000" />
+      <workItem from="1753931487684" duration="1335000" />
+      <workItem from="1753958254933" duration="54098000" />
+      <workItem from="1754279387995" duration="1527000" />
+      <workItem from="1754280942040" duration="1658000" />
+      <workItem from="1754282619342" duration="57996000" />
+    </task>
+    <task id="LOCAL-00001" summary="Retry push with selected files only">
+      <option name="closed" value="true" />
+      <created>1754611105873</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1754611105873</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Retry push with selected files only">
+      <option name="closed" value="true" />
+      <created>1754611300862</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1754611300862</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Retry push with selected files only">
+      <option name="closed" value="true" />
+      <created>1754611631794</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1754611631794</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Retry push with selected files only">
+      <option name="closed" value="true" />
+      <created>1754611648131</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1754611648131</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Retry push with selected files only">
+      <option name="closed" value="true" />
+      <created>1754837681830</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1754837681830</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="OPEN_GENERIC_TABS">
+      <map>
+        <entry key="adadb013-f779-4d3c-a653-ccea123938c9" value="TOOL_WINDOW" />
+      </map>
+    </option>
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+        <entry key="adadb013-f779-4d3c-a653-ccea123938c9">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <ignored-roots>
+      <path value="$PROJECT_DIR$" />
+    </ignored-roots>
+    <MESSAGE value="Retry push with selected files only" />
+    <option name="LAST_COMMIT_MESSAGE" value="Retry push with selected files only" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/SAGE_Lab$splits.coverage" NAME="splits Coverage Results" MODIFIED="1754354477474" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/code" />
+    <SUITE FILE_PATH="coverage/SAGE_Lab$chemprop_retrain.coverage" NAME="chemprop_retrain Coverage Results" MODIFIED="1754836052945" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/code" />
+    <SUITE FILE_PATH="coverage/SAGE_Lab$spectra_splits.coverage" NAME="spectra_splits Coverage Results" MODIFIED="1754354520307" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/code" />
+  </component>
+</project>

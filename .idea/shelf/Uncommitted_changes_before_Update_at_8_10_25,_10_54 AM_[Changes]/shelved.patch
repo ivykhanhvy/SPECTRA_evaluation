@@ -1,0 +1,1223 @@
+Index: .gitignore
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+--- /dev/null	(date 1754440249405)
++++ b/.gitignore	(date 1754440249405)
+@@ -0,0 +1,2 @@
++*.gexf
++*.DS_Store
+Index: code/spectra_splits.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/code/spectra_splits.py b/code/spectra_splits.py
+new file mode 100644
+--- /dev/null	(date 1754354477439)
++++ b/code/spectra_splits.py	(date 1754354477439)
+@@ -0,0 +1,103 @@
++import deepchem as dc
++from spectrae import Spectra, SpectraDataset
++import numpy as np
++import pandas as pd
++from rdkit import Chem
++from rdkit.Chem import rdFingerprintGenerator
++from rdkit.DataStructs.cDataStructs import TanimotoSimilarity
++from tqdm import tqdm
++
++class MolnetDataset(SpectraDataset):
++  def parse(self, dataset):
++    return dataset
++
++  def __len__(self):
++    return len(self.samples)
++
++  def sample_to_index(self,sample):
++    if not hasattr(self, 'index_to_sequence'):
++      print('Generating index to sequence')
++      self.index_to_sequence = {}
++      for i in tqdm(range(len(self.samples))):
++        x = self.__getitem__(i)
++        self.index_to_sequence[x] = i
++    return self.index_to_sequence[sample]
++
++  def __getitem__(self, idx):
++    return self.samples[idx]
++
++class MolnetTanimotoSpectra(Spectra):
++  def spectra_properties(self, sample_one, sample_two):
++    return TanimotoSimilarity(sample_one, sample_two)
++
++  def cross_split_overlap(self, train, test):
++    average_similarity = []
++    for i in train:
++      for j in test:
++        average_similarity.append(self.spectra_properties(i,j))
++    return np.mean(average_similarity)
++
++class MolnetHammingSpectra(Spectra):
++  def spectra_properties(self, sample_one, sample_two):
++      return np.sum(sample_one != sample_two)/1024
++
++  def cross_split_overlap(self, train, test):
++    average_similarity = []
++    for i in train:
++      for j in test:
++        average_similarity.append(self.spectra_properties(i,j))
++    return np.mean(average_similarity)
++
++def generate_spectra_tanimoto_splits(dataset_name, spectra_parameters):
++  tasks, molnet_dataset, transformers = getattr(dc.molnet, f'load_{dataset_name}')(splitter=None,reload=False)
++  dataset_smiles = molnet_dataset[0].ids
++
++  mfp = []
++  for i in range(len(dataset_smiles)):
++    mol = Chem.MolFromSmiles(dataset_smiles[i])
++    fp = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=1024).GetFingerprint(mol)
++    mfp.append(fp)
++
++  spectra_dataset = MolnetDataset(mfp, f'{dataset_name}')
++  tanimoto_spectra = MolnetTanimotoSpectra(spectra_dataset, binary=False)
++  tanimoto_spectra.pre_calculate_spectra_properties(f'{dataset_name}', force_recalculate = False)
++  tanimoto_spectra.generate_spectra_splits(**spectra_parameters)
++
++  stats = tanimoto_spectra.return_all_split_stats()
++  stats_df = pd.DataFrame(stats).sort_values(by='SPECTRA_parameter', ascending=True)
++
++  return stats_df
++
++def generate_spectra_hamming_splits(dataset_name, spectra_parameters):
++  tasks, molnet_dataset, transformers = getattr(dc.molnet, f'load_{dataset_name}')(splitter=None, reload=False)
++  dataset_smiles = molnet_dataset[0].ids
++
++  mfp = []
++  for i in range(len(dataset_smiles)):
++    mol = Chem.MolFromSmiles(dataset_smiles[i])
++    fp = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=1024).GetFingerprint(mol)
++    mfp.append(fp)
++  mfp = np.array(mfp)
++
++  spectra_dataset = MolnetDataset(mfp, f'{dataset_name}')
++  hamming_spectra = MolnetHammingSpectra(spectra_dataset, binary=False)
++  hamming_spectra.pre_calculate_spectra_properties(f'{dataset_name}', force_recalculate=False)
++  hamming_spectra.generate_spectra_splits(**spectra_parameters)
++
++  stats = hamming_spectra.return_all_split_stats()
++  stats_df = pd.DataFrame(stats).sort_values(by='SPECTRA_parameter', ascending=True)
++
++  return stats_df
++
++if __name__ == "__main__":
++    datasets = ['tox21']
++    #datasets = ['bace_classification', 'bbbp', 'sider', 'clintox', 'delaney', 'freesolv', 'lipo']
++    spectra_parameters = {'number_repeats': 3,
++                          'random_seed': [42, 44, 46],
++                          'spectral_parameters': ["{:.2f}".format(i) for i in np.arange(0, 1.05, 0.05)],
++                          'force_reconstruct': False,
++                          }
++
++    for dataset in datasets:
++        generate_spectra_tanimoto_splits(dataset, spectra_parameters)
++        generate_spectra_hamming_splits(dataset, spectra_parameters)
+Index: notebook/random_scaffold_umap_splits.ipynb
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/notebook/random_scaffold_umap_splits.ipynb b/notebook/random_scaffold_umap_splits.ipynb
+new file mode 100644
+--- /dev/null	(date 1754257198950)
++++ b/notebook/random_scaffold_umap_splits.ipynb	(date 1754257198950)
+@@ -0,0 +1,165 @@
++#%%
++%pip install deepchem
++%pip install chemprop
++%pip install rdkit
++%pip install umap-learn
++%pip install seaborn
++#%%
++%pip install numpy==2.0
++#%%
++import deepchem as dc
++import chemprop
++import numpy as np
++import pandas as pd
++from rdkit import Chem
++from rdkit import DataStructs
++from rdkit.Chem import Draw, AllChem, rdFingerprintGenerator
++from rdkit.DataStructs.cDataStructs import TanimotoSimilarity
++from tqdm import tqdm
++import os
++import shutil
++import pickle
++import umap.umap_ as umap
++import seaborn as sns
++import matplotlib.pyplot as plt
++import sklearn
++#%%
++datasets = ['bace_classification','tox21','bbbp','sider','clintox','hiv','delaney','freesolv','lipo']
++random_splitter = dc.splits.RandomSplitter()
++scaffold_splitter = dc.splits.ScaffoldSplitter()
++
++for dataset_name in datasets:
++    tasks, molnet_dataset, transformers = getattr(dc.molnet, f'load_{dataset_name}')(splitter = None, reload = False)
++    dataset = molnet_dataset[0]
++    all_ids = np.array(dataset.ids)
++
++    random_save_dir = f"/Users/ivymac/Desktop/SAGE_Lab/random/{dataset_name}"
++    os.makedirs(random_save_dir, exist_ok=True)
++
++    scaffold_save_dir = f"/Users/ivymac/Desktop/SAGE_Lab/scaffold/{dataset_name}"
++    os.makedirs(scaffold_save_dir, exist_ok=True)
++
++    for index, value in enumerate([42, 43, 44, 45, 46]):
++        random_train, random_test = random_splitter.train_test_split(dataset, frac_train = 0.8, seed = value)
++        random_train_smiles = set(random_train.ids)
++        random_test_smiles = set(random_test.ids)
++
++        random_train_indices = [index for index, smiles in enumerate(all_ids) if smiles in random_train_smiles]
++        random_test_indices = [index for index, smiles in enumerate(all_ids) if smiles in random_test_smiles]
++        assert len(set(random_train_indices) & set(random_test_indices)) == 0
++        assert len(set(random_train_indices + random_test_indices)) == len(all_ids)
++
++        with open(os.path.join(random_save_dir, f"{dataset_name}_random_train_split_{index}.pkl"), "wb") as f:
++           pickle.dump(random_train_indices, f)
++
++        with open(os.path.join(random_save_dir, f"{dataset_name}_random_test_split_{index}.pkl"), "wb") as f:
++            pickle.dump(random_test_indices, f)
++
++        print(f"Saved random split {index} of {dataset_name} to random {dataset_name} folder.")
++        print("Dataset size:" + str(len(dataset)))
++        print("Train size: " + str(len(random_train_indices)))
++        print("Test size: " + str(len(random_test_indices)))
++        print("____________________________")
++
++        scaffold_train, scaffold_test = scaffold_splitter.train_test_split(dataset, frac_train = 0.8, seed = value)
++        scaffold_train_smiles = set(scaffold_train.ids)
++        scaffold_test_smiles = set(scaffold_test.ids)
++
++        scaffold_train_indices = [index for index, smiles in enumerate(all_ids) if smiles in scaffold_train_smiles]
++        scaffold_test_indices = [index for index, smiles in enumerate(all_ids) if smiles in scaffold_test_smiles]
++        assert len(set(scaffold_train_indices) & set(scaffold_test_indices)) == 0
++        assert len(set(scaffold_train_indices + scaffold_test_indices)) == len(all_ids)
++
++        with open(os.path.join(scaffold_save_dir, f"{dataset_name}_scaffold_train_split_{index}.pkl"), "wb") as f:
++           pickle.dump(scaffold_train_indices, f)
++
++        with open(os.path.join(scaffold_save_dir, f"{dataset_name}_scaffold_test_split_{index}.pkl"), "wb") as f:
++            pickle.dump(scaffold_test_indices, f)
++
++        print(f"Saved scaffold split {index} of {dataset_name} to scaffold {dataset_name} folder.")
++        print("Dataset size:" + str(len(dataset)))
++        print("Train size: " + str(len(scaffold_train_indices)))
++        print("Test size: " + str(len(scaffold_test_indices)))
++        print("____________________________")
++#%%
++with open("/Users/ivymac/Desktop/SAGE_Lab/random/bace_classification/bace_classification_random_test_split_0.pkl", "rb") as f:
++    random_bace_test_0 = pickle.load(f)
++
++with open("/Users/ivymac/Desktop/SAGE_Lab/scaffold/bace_classification/bace_classification_scaffold_test_split_0.pkl","rb") as f:
++    scaffold_bace_test_0 = pickle.load(f)
++
++overlap = set(random_bace_test_0) & set(scaffold_bace_test_0)
++print(overlap)
++print(len(overlap))
++print(len(random_bace_test_0))
++print(len(scaffold_bace_test_0))
++#%%
++featurizer = dc.feat.CircularFingerprint(radius = 2, size = 1024)
++tasks, molnet_dataset, transformers = getattr(dc.molnet, f'load_bace_classification')(featurizer = featurizer, splitter = None, reload = False)
++dataset = molnet_dataset[0].X
++test_size = round(0.2*len(dataset),0)
++#%%
++mfp_umap = umap.UMAP(n_components = 2, transform_seed = 42).fit_transform(dataset)
++kmeans = KMeans(n_clusters = 7, random_state = 42)
++cluster_labels = kmeans.fit_predict(mfp_umap)
++
++cluster_index, counts = np.unique(cluster_labels, return_counts = True)
++difference_list = [abs(test_size-i) for i in counts]
++min_cluster_index = difference_list.index(min(difference_list))
++test_indices = np.where(cluster_labels == min_cluster_index)[0]
++train_indices = np.where(cluster_labels != min_cluster_index)[0]
++
++assert len(set(train_indices) & set(test_indices)) == 0
++assert len(set(np.concatenate([train_indices, test_indices]))) == len(dataset)
++
++#
++# with open(os.path.join(umap_save_dir, f"{dataset_name}_umap_train_split_{index}.pkl"), "wb") as f:
++#     pickle.dump(umap_train_indices, f)
++#
++# with open(os.path.join(umap_save_dir, f"{dataset_name}_umap_test_split_{index}.pkl"), "wb") as f:
++#     pickle.dump(umap_test_indices, f)
++#
++# print(f"Save umap split {index} of {dataset_name}.")
++# print(f'Standard test size: {len(mfp_dataset)}')
++# print(f'Train size: {len(umap_train_indices)}')
++# print(f'Test size: {len(umap_test_indices)}')
++# print('-------------------------')
++#%%
++datasets = ['bace_classification','tox21','bbbp','sider','clintox','hiv','delaney','freesolv','lipo']
++featurizer = dc.feat.CircularFingerprint(radius = 2, size = 1024)
++n_clusters = 7
++
++for dataset_name in datasets:
++    tasks, molnet_dataset, transformers = getattr(dc.molnet, f'load_{dataset_name}')(featurizer = featurizer, splitter = None, reload = False)
++    mfp_dataset = molnet_dataset[0].X
++    test_size = round(0.2*len(mfp_dataset),0)
++
++    umap_save_dir = f"/Users/ivymac/Desktop/SAGE_Lab/umap/{dataset_name}"
++    os.makedirs(umap_save_dir, exist_ok=True)
++
++    for index, value in enumerate([42, 43, 44, 45, 46]):
++        mfp_umap = umap.UMAP(n_components = 2, transform_seed = value).fit_transform(mfp_dataset)
++        kmeans = KMeans(n_clusters = n_clusters, random_state = value)
++        cluster_labels = kmeans.fit_predict(mfp_umap)
++
++        cluster_index, counts = np.unique(cluster_labels, return_counts = True)
++        difference_list = [abs(test_size-i) for i in counts]
++        min_cluster_index = difference_list.index(min(difference_list))
++        umap_test_indices = np.where(cluster_labels == min_cluster_index)[0]
++        umap_train_indices = np.where(cluster_labels != min_cluster_index)[0]
++
++        assert len(set(umap_train_indices) & set(umap_test_indices)) == 0
++        assert len(set(np.concatenate([umap_train_indices, umap_test_indices]))) == len(mfp_dataset)
++
++        with open(os.path.join(umap_save_dir, f"{dataset_name}_umap_train_split_{index}.pkl"), "wb") as f:
++           pickle.dump(umap_train_indices, f)
++
++        with open(os.path.join(umap_save_dir, f"{dataset_name}_umap_test_split_{index}.pkl"), "wb") as f:
++            pickle.dump(umap_test_indices, f)
++
++        print(f"Save umap split {index} of {dataset_name}.")
++        print(f'Standard test size: {test_size}')
++        print(f'Train size: {len(umap_train_indices)}')
++        print(f'Test size: {len(umap_test_indices)}')
++        print('-------------------------')
++#%%
+Index: notebook/spectra_hamming_splits.ipynb
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/notebook/spectra_hamming_splits.ipynb b/notebook/spectra_hamming_splits.ipynb
+new file mode 100644
+--- /dev/null	(date 1754277847499)
++++ b/notebook/spectra_hamming_splits.ipynb	(date 1754277847499)
+@@ -0,0 +1,277 @@
++#%%
++from spectra_tanimoto_splits import lipo_dataset
++#from spectra_tanimoto_splits import sider_smiles
++%pip install spectrae
++#%%
++import deepchem as dc
++import chemprop
++import numpy as np
++import pandas as pd
++from rdkit import Chem
++from rdkit import DataStructs
++from rdkit.Chem import Draw, AllChem, rdFingerprintGenerator
++from rdkit.DataStructs.cDataStructs import TanimotoSimilarity
++from tqdm import tqdm
++import os
++import shutil
++import pickle
++from spectrae import Spectra, SpectraDataset
++#%%
++class molnet_dataset(SpectraDataset):
++
++  def parse(self, dataset):
++    return dataset
++
++  def __len__(self):
++    return len(self.samples)
++
++  def sample_to_index(self,sample):
++    if not hasattr(self, 'index_to_sequence'):
++      print('Generating index to sequence')
++      self.index_to_sequence = {}
++      for i in tqdm(range(len(self.samples))):
++        x = self.__getitem__(i)
++        self.index_to_sequence[x] = i
++    return self.index_to_sequence[sample]
++
++  def __getitem__(self, idx):
++    return self.samples[idx]
++#%%
++class molnet_hamming_spectra(Spectra):
++  def spectra_properties(self, sample_one, sample_two):
++      return np.sum(sample_one != sample_two)/1024
++
++  def cross_split_overlap(self, train, test):
++    average_similarity = []
++    for i in train:
++      for j in test:
++        average_similarity.append(self.spectra_properties(i,j))
++    return np.mean(average_similarity)
++#%%
++spectra_parameters = {'number_repeats': 3,
++                      'random_seed': [42,44,46],
++                      'spectral_parameters':["{:.2f}".format(i) for i in np.arange(0,1.05,0.05)],
++                      'force_reconstruct': False,
++                      }
++#%%
++tasks,sider_datasets,transformers = dc.molnet.load_sider(splitter = None)
++sider_smiles = sider_datasets[0].ids
++#%%
++mfp_sider = []
++for i in range(len(sider_smiles)):
++  mol = Chem.MolFromSmiles(sider_smiles[i])
++  fp = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=1024).GetFingerprint(mol)
++  mfp_sider.append(fp)
++mfp_sider = np.array(mfp_sider)
++
++mfp_sider
++#%%
++sider_dataset = molnet_dataset(mfp_sider, 'sider')
++sider_spectra = molnet_hamming_spectra(sider_dataset, binary = False)
++sider_spectra.pre_calculate_spectra_properties('sider',force_recalculate = True)
++#%%
++sider_spectra.generate_spectra_splits(**spectra_parameters)
++#%%
++stats_sider = sider_spectra.return_all_split_stats()
++stats_sider_df = pd.DataFrame(stats_sider).sort_values(by = 'SPECTRA_parameter', ascending = True)
++
++print('SPECTRA Splits on Hamming Distance of SIDER')
++print('----------------------')
++for index, row in stats_sider_df.iterrows():
++  print(f'SPECTRA parameter: {row["SPECTRA_parameter"]}')
++  print(f'Train size: {row["train_size"]} | Test size: {row["test_size"]}')
++  print(f'Cross split overlap: {row["cross_split_overlap"]} \n')
++#%%
++import matplotlib.pyplot as plt
++plt.scatter(stats_sider['SPECTRA_parameter'], stats_sider['cross_split_overlap'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Cross split overlap')
++plt.title('SPECTRA Splits on Hamming Distance of SIDER')
++plt.show()
++#%%
++plt.scatter(stats_sider['SPECTRA_parameter'], stats_sider['train_size'])
++plt.scatter(stats_sider['SPECTRA_parameter'], stats_sider['test_size'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Split size')
++plt.legend(['Train','Test'])
++plt.title('SPECTRA Splits on Hamming Distance of SIDER')
++plt.show()
++#%%
++tasks,bbbp_datasets,transformers = dc.molnet.load_bbbp(splitter = None)
++bbbp_smiles = bbbp_datasets[0].ids
++#%%
++mfp_bbbp = []
++for i in range(len(bbbp_smiles)):
++  mol = Chem.MolFromSmiles(bbbp_smiles[i])
++  fp = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=1024).GetFingerprint(mol)
++  mfp_bbbp.append(fp)
++mfp_bbbp = np.array(mfp_bbbp)
++print(len(mfp_bbbp))
++#%%
++bbbp_dataset = molnet_dataset(mfp_bbbp, 'bbbp')
++bbbp_spectra = molnet_hamming_spectra(bbbp_dataset, binary = False)
++bbbp_spectra.pre_calculate_spectra_properties('bbbp',force_recalculate = True)
++#%%
++bbbp_spectra.generate_spectra_splits(**spectra_parameters)
++#%%
++bbbp_stats = bbbp_spectra.return_all_split_stats()
++bbbp_stats_df = pd.DataFrame(bbbp_stats).sort_values(by = 'SPECTRA_parameter', ascending = True)
++
++print('SPECTRA Splits on Hamming Distance of BBBP')
++print('----------------------')
++for index, row in bbbp_stats_df.iterrows():
++  print(f'SPECTRA parameter: {row["SPECTRA_parameter"]}')
++  print(f'Train size: {row["train_size"]} | Test size: {row["test_size"]}')
++  print(f'Cross split overlap: {row["cross_split_overlap"]} \n')
++#%%
++import matplotlib.pyplot as plt
++plt.scatter(bbbp_stats['SPECTRA_parameter'], bbbp_stats['cross_split_overlap'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Cross split overlap')
++plt.title('SPECTRA Splits on Hamming Distance of BBBP')
++plt.show()
++#%%
++plt.scatter(bbbp_stats['SPECTRA_parameter'], bbbp_stats['train_size'])
++plt.scatter(bbbp_stats['SPECTRA_parameter'], bbbp_stats['test_size'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Split size')
++plt.legend(['Train','Test'])
++plt.title('SPECTRA Splits on Hamming Distance of SIDER')
++plt.show()
++#%%
++tasks, clintox_datasets,transformers = dc.molnet.load_clintox(splitter = None)
++clintox_smiles = clintox_datasets[0].ids
++#%%
++mfp_clintox = []
++
++for i in range(len(clintox_smiles)):
++    mol = Chem.MolFromSmiles(clintox_smiles[i])
++    fp = rdFingerprintGenerator.GetMorganGenerator(radius = 2, fpSize = 1024).GetFingerprint(mol)
++    mfp_clintox.append(fp)
++
++mfp_clintox = np.array(mfp_clintox)
++#%%
++clintox_dataset = molnet_dataset(mfp_clintox, 'clintox')
++clintox_spectra = molnet_hamming_spectra(clintox_dataset, binary = False)
++clintox_spectra.pre_calculate_spectra_properties('clintox',force_recalculate = False)
++#%%
++clintox_spectra.generate_spectra_splits(**spectra_parameters)
++#%%
++clintox_stats = clintox_spectra.return_all_split_stats()
++clintox_stats_df = pd.DataFrame(clintox_stats).sort_values(by = 'SPECTRA_parameter', ascending = True)
++
++print('SPECTRA Splits on Hamming Distance of ClinTox')
++print('----------------------')
++for index, row in clintox_stats_df.iterrows():
++  print(f'SPECTRA parameter: {row["SPECTRA_parameter"]}')
++  print(f'Train size: {row["train_size"]} | Test size: {row["test_size"]}')
++  print(f'Cross split overlap: {row["cross_split_overlap"]} \n')
++#%%
++import matplotlib.pyplot as plt
++plt.scatter(clintox_stats['SPECTRA_parameter'], clintox_stats['cross_split_overlap'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Cross split overlap')
++plt.title('SPECTRA Splits on Hamming Distance of ClinTox')
++plt.show()
++#%%
++plt.scatter(clintox_stats['SPECTRA_parameter'], clintox_stats['train_size'])
++plt.scatter(clintox_stats['SPECTRA_parameter'], clintox_stats['test_size'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Split size')
++plt.legend(['Train','Test'])
++plt.title('SPECTRA Splits on Hamming Distance of ClinTox')
++plt.show()
++#%%
++tasks, delaney_datasets,transformers = dc.molnet.load_delaney(splitter = None)
++delaney_smiles = delaney_datasets[0].ids
++#%%
++mfp_delaney = []
++
++for i in range(len(delaney_smiles)):
++    mol = Chem.MolFromSmiles(delaney_smiles[i])
++    fp = rdFingerprintGenerator.GetMorganGenerator(radius = 2, fpSize = 1024).GetFingerprint(mol)
++    mfp_delaney.append(fp)
++
++mfp_delaney = np.array(mfp_delaney)
++#%%
++delaney_dataset = molnet_dataset(mfp_delaney, 'delaney')
++delaney_spectra = molnet_hamming_spectra(delaney_dataset, binary = False)
++delaney_spectra.pre_calculate_spectra_properties('delaney')
++#%%
++delaney_spectra.generate_spectra_splits(**spectra_parameters)
++#%%
++stats_delaney = delaney_spectra.return_all_split_stats()
++stats_delaney_df = pd.DataFrame(stats_delaney).sort_values(by = 'SPECTRA_parameter', ascending = True)
++
++print('SPECTRA Splits on Hamming Distance of Delaney')
++print('----------------------')
++for index, row in stats_delaney_df.iterrows():
++    print(f'SPECTRA parameter: {row["SPECTRA_parameter"]}')
++    print(f'Test size: {row["test_size"]} | Train size: {row["train_size"]}')
++    print(f'Cross split overlap: {row["cross_split_overlap"]} \n')
++#%%
++plt.scatter(stats_delaney_df['SPECTRA_parameter'], stats_delaney_df['cross_split_overlap'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Cross split overlap')
++plt.title('SPECTRA Splits on Hamming Distance of Delaney')
++plt.show()
++#%%
++plt.scatter(stats_delaney_df['SPECTRA_parameter'], stats_delaney_df['train_size'])
++plt.scatter(stats_delaney_df['SPECTRA_parameter'], stats_delaney_df['test_size'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Split size')
++plt.legend(['Train','Test'])
++plt.title('SPECTRA Splits on Hamming Distance of Delaney')
++plt.show()
++#%%
++tasks, lipo_dataset, transformers = dc.molnet.load_lipo(splitter = None)
++lipo_smiles = lipo_dataset[0].ids
++#%%
++mfp_lipo = []
++
++for i in range(len(lipo_smiles)):
++    mol = Chem.MolFromSmiles(lipo_smiles[i])
++    fp = rdFingerprintGenerator.GetMorganGenerator(radius = 2, fpSize = 1024).GetFingerprint(mol)
++    mfp_lipo.append(fp)
++
++mfp_lipo = np.array(mfp_lipo)
++#%%
++lipo_dataset = molnet_dataset(mfp_lipo, 'lipo')
++lipo_spectra = molnet_hamming_spectra(lipo_dataset, binary = False)
++lipo_spectra.pre_calculate_spectra_properties('lipo', force_recalculate = False)
++#%%
++lipo_spectra.generate_spectra_splits(**spectra_parameters)
++#%%
++lipo_stats = lipo_spectra.return_all_split_stats()
++lipo_stats_df = pd.DataFrame(lipo_stats).sort_values(by = 'SPECTRA_parameter', ascending = True)
++
++print('SPECTRA Splits on Hamming Distance of Lipo')
++print('----------------------')
++for index, row in lipo_stats_df.iterrows():
++    print(f'SPECTRA parameter: {row["SPECTRA_parameter"]}')
++    print(f'Test size: {row["test_size"]} | Train size: {row["train_size"]}')
++    print(f'Cross split overlap: {row["cross_split_overlap"]} \n')
++
++lipo_spectra.return_split_samples(0.90,0)
++#%%
++plt.scatter(lipo_stats['SPECTRA_parameter'], lipo_stats['cross_split_overlap'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Cross split overlap')
++plt.title('SPECTRA Splits on Hamming Distance of Lipo')
++plt.show()
++#%%
++plt.scatter(lipo_stats['SPECTRA_parameter'], lipo_stats['train_size'])
++plt.scatter(lipo_stats['SPECTRA_parameter'], lipo_stats['test_size'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Split size')
++plt.title('SPECTRA Splits on Hamming Distance of Lipo')
++plt.legend(['Train','Test'])
++plt.show()
++#%%
++import pickle
++
++with open("/Users/ivymac/Desktop/SAGE_Lab/spectra_hamming/bace/bace_SPECTRA_splits_hamming/SP_0.90_0/train.pkl", "rb") as f:
++    split_data = pickle.load(f)
++split_data
++print(type(split_data))
++#%%
+Index: notebook/spectra_tanimoto_splits.ipynb
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/notebook/spectra_tanimoto_splits.ipynb b/notebook/spectra_tanimoto_splits.ipynb
+new file mode 100644
+--- /dev/null	(date 1754446922014)
++++ b/notebook/spectra_tanimoto_splits.ipynb	(date 1754446922014)
+@@ -0,0 +1,418 @@
++#%%
++import deepchem as dc
++import chemprop
++from spectrae import Spectra, SpectraDataset
++import numpy as np
++import pandas as pd
++from rdkit import Chem
++from rdkit import DataStructs
++from rdkit.Chem import Draw, AllChem, rdFingerprintGenerator
++from rdkit.DataStructs.cDataStructs import TanimotoSimilarity
++from tqdm import tqdm
++import os
++import shutil
++#%%
++class molnet_dataset(SpectraDataset):
++
++  def parse(self, dataset):
++    return dataset
++
++  def __len__(self):
++    return len(self.samples)
++
++  def sample_to_index(self,sample):
++    if not hasattr(self, 'index_to_sequence'):
++      print('Generating index to sequence')
++      self.index_to_sequence = {}
++      for i in tqdm(range(len(self.samples))):
++        x = self.__getitem__(i)
++        self.index_to_sequence[x] = i
++    return self.index_to_sequence[sample]
++
++  def __getitem__(self, idx):
++    return self.samples[idx]
++#%%
++class molnet_tanimoto_spectra(Spectra):
++  def spectra_properties(self, sample_one, sample_two):
++    return TanimotoSimilarity(sample_one, sample_two)
++
++  def cross_split_overlap(self, train, test):
++    average_similarity = []
++    for i in train:
++      for j in test:
++        average_similarity.append(self.spectra_properties(i,j))
++    return np.mean(average_similarity)
++#%%
++spectra_parameters = {'number_repeats': 3,
++                      'random_seed': [42,44,46],
++                      'spectral_parameters':["{:.2f}".format(i) for i in np.arange(0,1.05,0.05)],
++                      'force_reconstruct': True,
++                      }
++#%%
++tasks, dataset, transformers = dc.molnet.load_bace_classification(splitter = None)
++bace_data = dataset[0].X.tolist()
++bace_data
++#bace_spectra = molnet_tanimoto_spectra(bace_dataset, binary = False)
++#bace_spectra.pre_calculate_spectra_properties('bace', force_recalculate = True)
++#%%
++tasks,datasets,transformers = dc.molnet.load_bace_classification(splitter = None)
++bace_smiles = datasets[0].ids
++
++#%%
++mfp_bace = []
++for i in range(len(bace_smiles)):
++  mol = Chem.MolFromSmiles(bace_smiles[i])
++  fp = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=1024).GetFingerprint(mol)
++  mfp_bace.append(fp)
++#%%
++bace_dataset = molnet_dataset(mfp_bace,'bace')
++print(bace_dataset.samples)
++print(type(bace_dataset.samples))
++print(bace_dataset.name)
++#%%
++bace_spectra = molnet_tanimoto_spectra(bace_dataset, binary = False)
++print(type(bace_spectra.dataset))
++#%%
++bace_spectra.pre_calculate_spectra_properties('bace', force_recalculate = True)
++#%%
++bace_spectra.generate_spectra_splits(**spectra_parameters)
++#%%
++stats_bace = bace_spectra.return_all_split_stats()
++stats_bace_df = pd.DataFrame(stats_bace).sort_values(by = 'SPECTRA_parameter', ascending = True)
++
++print('SPECTRA Splits on BACE')
++print('----------------------')
++for index, row in stats_bace_df.iterrows():
++  print(f'SPECTRA parameter: {row["SPECTRA_parameter"]}')
++  print(f'Train size: {row["train_size"]} | Test size: {row["test_size"]}')
++  print(f'Cross split overlap: {row["cross_split_overlap"]} \n')
++#%%
++plt.scatter(stats_bace['SPECTRA_parameter'], stats_bace['cross_split_overlap'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Cross split overlap')
++plt.title('SPECTRA Splits of BACE')
++plt.show()
++#%%
++plt.scatter(stats_bace['SPECTRA_parameter'], stats_bace['train_size'])
++plt.scatter(stats_bace['SPECTRA_parameter'], stats_bace['test_size'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Split size')
++plt.legend(['Train','Test'])
++plt.title('SPECTRA Splits of BACE')
++plt.show()
++#%%
++save_path_bace = '/content/drive/MyDrive/SAGELab/spectra_project/spectra_splits/Tanimoto/BACE'
++if not os.path.exists(save_path_bace):
++  os.makedirs(save_path_bace)
++shutil.copytree('bace_SPECTRA_splits', os.path.join(save_path_bace, 'bace_SPECTRA_splits'))
++shutil.copytree('bace_spectral_property_graphs', os.path.join(save_path_bace, 'bace_spectral_property_graphs'))
++shutil.copy('bace_precalculated_spectra_properties', os.path.join(save_path_bace, 'bace_precalculated_spectra_properties'))
++#%%
++tasks,bbbp_datasets,transformers = dc.molnet.load_bbbp(splitter = None)
++bbbp_smiles = bbbp_datasets[0].ids
++#%%
++mfp_bbbp = []
++
++for i in range(len(bbbp_smiles)):
++  mol = Chem.MolFromSmiles(bbbp_smiles[i])
++  fp = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=1024).GetFingerprint(mol)
++  mfp_bbbp.append(fp)
++#%%
++bbbp_dataset = molnet_dataset(mfp_bbbp,'bbbp')
++#%%
++bbbp_spectra = molnet_tanimoto_spectra(bbbp_dataset, binary = False)
++#%%
++bbbp_spectra.pre_calculate_spectra_properties('bbbp', force_recalculate = True)
++#%%
++bbbp_spectra.generate_spectra_splits(**spectra_parameters)
++#%%
++save_path_bbbp = '/content/drive/MyDrive/SAGELab/spectra_project/spectra_splits/Tanimoto/BBBP'
++if not os.path.exists(save_path_bbbp):
++  os.makedirs(save_path_bbbp)
++shutil.copytree('bbbp_SPECTRA_splits', os.path.join(save_path_bbbp, 'bbbp_SPECTRA_splits'))
++shutil.copytree('bbbp_spectral_property_graphs', os.path.join(save_path_bbbp, 'bbbp_spectral_property_graphs'))
++#%%
++stats_bbbp = bbbp_spectra.return_all_split_stats()
++stats_bbbp_df = pd.DataFrame(stats_bbbp).sort_values(by = 'SPECTRA_parameter', ascending = True)
++
++print('SPECTRA Splits on BBBP')
++print('----------------------')
++for index, row in stats_bbbp_df.iterrows():
++  print(f'SPECTRA parameter: {row["SPECTRA_parameter"]}')
++  print(f'Train size: {row["train_size"]} | Test size: {row["test_size"]}')
++  print(f'Cross split overlap: {row["cross_split_overlap"]} \n')
++#%%
++plt.scatter(stats_bbbp['SPECTRA_parameter'], stats_bbbp['cross_split_overlap'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Cross split overlap')
++plt.title('SPECTRA Splits of BBBP')
++plt.show()
++#%%
++plt.scatter(stats_bbbp['SPECTRA_parameter'], stats_bbbp['train_size'])
++plt.scatter(stats_bbbp['SPECTRA_parameter'], stats_bbbp['test_size'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Split size')
++plt.legend(['Train','Test'])
++plt.title('SPECTRA Splits of BBBP')
++plt.show()
++#%%
++tasks,clintox_datasets,transformers = dc.molnet.load_clintox(splitter = None)
++clintox_smiles = clintox_datasets[0].ids
++#%%
++mfp_clintox = []
++
++for i in range(len(clintox_smiles)):
++  mol = Chem.MolFromSmiles(clintox_smiles[i])
++  fp = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=1024).GetFingerprint(mol)
++  mfp_clintox.append(fp)
++#%%
++clintox_dataset = molnet_dataset(mfp_clintox,'clintox')
++clintox_spectra = molnet_tanimoto_spectra(clintox_dataset, binary = False)
++clintox_spectra.pre_calculate_spectra_properties('clintox', force_recalculate = True)
++#%%
++clintox_spectra.generate_spectra_splits(**spectra_parameters)
++#%%
++save_path_clintox = '/content/drive/MyDrive/SAGELab/spectra_project/spectra_splits/tanimoto/ClinTox'
++if not os.path.exists(save_path_clintox):
++  os.makedirs(save_path_clintox)
++shutil.copytree('clintox_SPECTRA_splits', os.path.join(save_path_clintox, 'clintox_SPECTRA_splits'))
++shutil.copytree('clintox_spectral_property_graphs', os.path.join(save_path_clintox, 'clintox_spectral_property_graphs'))
++shutil.copy('clintox_precalculated_spectra_properties', os.path.join(save_path_clintox, 'clintox_precalculated_spectra_properties'))
++#%%
++stats_clintox = clintox_spectra.return_all_split_stats()
++stats_clintox_df = pd.DataFrame(stats_clintox).sort_values(by = 'SPECTRA_parameter', ascending = True)
++
++print('SPECTRA Splits on ClinTox')
++print('----------------------')
++for index, row in stats_clintox_df.iterrows():
++  print(f'SPECTRA parameter: {row["SPECTRA_parameter"]}')
++  print(f'Train size: {row["train_size"]} | Test size: {row["test_size"]}')
++  print(f'Cross split overlap: {row["cross_split_overlap"]} \n')
++#%%
++plt.scatter(stats_clintox['SPECTRA_parameter'], stats_clintox['cross_split_overlap'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Cross split overlap')
++plt.title('SPECTRA Splits of ClinTox')
++plt.show()
++#%%
++plt.scatter(stats_clintox['SPECTRA_parameter'], stats_clintox['train_size'])
++plt.scatter(stats_clintox['SPECTRA_parameter'], stats_clintox['test_size'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Split size')
++plt.legend(['Train','Test'])
++plt.title('SPECTRA Splits of ClinTox')
++plt.show()
++#%%
++tasks, sider_dataset, transformers = dc.molnet.load_sider(splitter = None)
++sider_smiles = sider_dataset[0].ids
++#%%
++mfp_sider = []
++
++for i in range(len(sider_smiles)):
++  mol = Chem.MolFromSmiles(sider_smiles[i])
++  fp = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=1024).GetFingerprint(mol)
++  mfp_sider.append(fp)
++#%%
++sider_dataset = molnet_dataset(mfp_sider,'sider')
++sider_spectra = molnet_tanimoto_spectra(sider_dataset, binary = False)
++sider_spectra.pre_calculate_spectra_properties('sider', force_recalculate = True)
++#%%
++sider_spectra.generate_spectra_splits(**spectra_parameters)
++#%%
++save_path_sider = '/content/drive/MyDrive/SAGELab/spectra_project/spectra_splits/tanimoto/SIDER'
++if not os.path.exists(save_path_sider):
++  os.makedirs(save_path_sider)
++shutil.copytree('sider_SPECTRA_splits', os.path.join(save_path_sider, 'sider_SPECTRA_splits'))
++shutil.copytree('sider_spectral_property_graphs', os.path.join(save_path_sider, 'sider_spectral_property_graphs'))
++shutil.copy('sider_precalculated_spectra_properties', os.path.join(save_path_sider, 'sider_precalculated_spectra_properties'))
++#%%
++stats_sider = sider_spectra.return_all_split_stats()
++stats_sider_df = pd.DataFrame(stats_sider).sort_values(by = 'SPECTRA_parameter', ascending = True)
++
++print('SPECTRA Splits on SIDER')
++print('----------------------')
++for index, row in stats_sider_df.iterrows():
++  print(f'SPECTRA parameter: {row["SPECTRA_parameter"]}')
++  print(f'Train size: {row["train_size"]} | Test size: {row["test_size"]}')
++  print(f'Cross split overlap: {row["cross_split_overlap"]} \n')
++#%%
++plt.scatter(stats_sider['SPECTRA_parameter'], stats_sider['cross_split_overlap'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Cross split overlap')
++plt.title('SPECTRA Splits of SIDER')
++plt.show()
++#%%
++plt.scatter(stats_sider['SPECTRA_parameter'], stats_sider['train_size'])
++plt.scatter(stats_sider['SPECTRA_parameter'], stats_sider['test_size'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Split size')
++plt.legend(['Train','Test'])
++plt.title('SPECTRA Splits of SIDER')
++plt.show()
++#%%
++tasks, delaney_dataset, transformers = dc.molnet.load_delaney(splitter = None)
++delaney_smiles = delaney_dataset[0].ids
++#%%
++mfp_delaney = []
++
++for i in range(len(delaney_smiles)):
++  mol = Chem.MolFromSmiles(delaney_smiles[i])
++  fp = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=1024).GetFingerprint(mol)
++  mfp_delaney.append(fp)
++#%%
++delaney_dataset = molnet_dataset(mfp_delaney,'delaney')
++delaney_spectra = molnet_tanimoto_spectra(delaney_dataset, binary = False)
++delaney_spectra.pre_calculate_spectra_properties('delaney', force_recalculate = True)
++#%%
++delaney_spectra.generate_spectra_splits(**spectra_parameters)
++#%%
++save_path_delaney = '/content/drive/MyDrive/SAGELab/spectra_project/spectra_splits/tanimoto/Delaney'
++if not os.path.exists(save_path_delaney):
++  os.makedirs(save_path_delaney)
++shutil.copytree('delaney_SPECTRA_splits', os.path.join(save_path_delaney, 'delaney_SPECTRA_splits'))
++shutil.copytree('delaney_spectral_property_graphs', os.path.join(save_path_delaney, 'delaney_spectral_property_graphs'))
++shutil.copy('delaney_precalculated_spectra_properties', os.path.join(save_path_delaney, 'delaney_precalculated_spectra_properties'))
++#%%
++stats_delaney = delaney_spectra.return_all_split_stats()
++stats_delaney_df = pd.DataFrame(stats_delaney).sort_values(by = 'SPECTRA_parameter', ascending = True)
++
++print('SPECTRA Splits on Delaney')
++print('----------------------')
++for index, row in stats_delaney_df.iterrows():
++  print(f'SPECTRA parameter: {row["SPECTRA_parameter"]}')
++  print(f'Train size: {row["train_size"]} | Test size: {row["test_size"]}')
++  print(f'Cross split overlap: {row["cross_split_overlap"]} \n')
++#%%
++plt.scatter(stats_delaney['SPECTRA_parameter'], stats_delaney['cross_split_overlap'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Cross split overlap')
++plt.title('SPECTRA Splits of Delaney')
++plt.show()
++#%%
++plt.scatter(stats_delaney['SPECTRA_parameter'], stats_delaney['train_size'])
++plt.scatter(stats_delaney['SPECTRA_parameter'], stats_delaney['test_size'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Split size')
++plt.legend(['Train','Test'])
++plt.title('SPECTRA Splits of Delaney')
++plt.show()
++#%%
++tasks, freesolve_dataset, transformers = dc.molnet.load_freesolv(splitter = None)
++freesolve_smiles = freesolve_dataset[0].ids
++#%%
++mfp_freesolve = []
++
++for i in range(len(freesolve_smiles)):
++  mol = Chem.MolFromSmiles(freesolve_smiles[i])
++  fp = rdFingerprintGenerator.GetMorganGenerator(radius = 2, fpSize = 1024).GetFingerprint(mol)
++  mfp_freesolve.append(fp)
++#%%
++freesolve = molnet_dataset(mfp_freesolve,'freesolve')
++freesolve_spectra = molnet_tanimoto_spectra(freesolve, binary = False)
++freesolve_spectra.pre_calculate_spectra_properties('freesolve', force_recalculate = True)
++#%%
++freesolve_spectra.generate_spectra_splits(**spectra_parameters)
++#%%
++stats_freesolve = freesolve_spectra.return_all_split_stats()
++stats_freesolve_df = pd.DataFrame(stats_freesolve).sort_values(by = 'SPECTRA_parameter', ascending = True)
++
++print('SPECTRA Splits on FreeSolve')
++print('----------------------')
++for index, row in stats_freesolve_df.iterrows():
++  print(f'SPECTRA parameter: {row["SPECTRA_parameter"]}')
++  print(f'Train size: {row["train_size"]} | Test size: {row["test_size"]}')
++  print(f'Cross split overlap: {row["cross_split_overlap"]} \n')
++#%%
++plt.scatter(stats_freesolve['SPECTRA_parameter'], stats_freesolve['cross_split_overlap'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Cross split overlap')
++plt.title('SPECTRA Splits of FreeSolv')
++plt.show()
++#%%
++plt.scatter(stats_freesolve['SPECTRA_parameter'], stats_freesolve['train_size'])
++plt.scatter(stats_freesolve['SPECTRA_parameter'], stats_freesolve['test_size'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Split size')
++plt.legend(['Train','Test'])
++plt.title('SPECTRA Splits of FreeSolv')
++plt.show()
++#%%
++save_path_freesolv = '/content/drive/MyDrive/SAGELab/spectra_project/spectra_splits/tanimoto/FreeSolv'
++if not os.path.exists(save_path_freesolv):
++  os.makedirs(save_path_freesolv)
++shutil.copytree('freesolve_SPECTRA_splits', os.path.join(save_path_freesolv, 'freesolv_SPECTRA_splits'))
++shutil.copytree('freesolve_spectral_property_graphs', os.path.join(save_path_freesolv, 'freesolv_spectral_property_graphs'))
++shutil.copy('freesolve_precalculated_spectra_properties', os.path.join(save_path_freesolv, 'freesolv_precalculated_spectra_properties'))
++#%%
++tasks, hiv_dataset, transformers = dc.molnet.load_hiv(splitter = None)
++hiv_smiles = hiv_dataset[0].ids
++#%%
++mfp_hiv = []
++
++for i in range(len(hiv_smiles)):
++    mol = Chem.MolFromSmiles(hiv_smiles[i])
++    fp = rdFingerprintGenerator.GetMorganGenerator(radius = 2, fpSize = 1024).GetFingerprint(mol)
++    mfp_hiv.append(fp)
++#%%
++hiv_dataset = molnet_dataset(mfp_hiv,'hiv')
++hiv_spectra = molnet_tanimoto_spectra(hiv_dataset, binary = False)
++hiv_spectra.pre_calculate_spectra_properties('hiv', force_recalculate = False)
++#%%
++hiv_spectra.generate_spectra_splits(**spectra_parameters)
++#%%
++tasks, lipo_dataset, transformers = dc.molnet.load_lipo(splitter = None)
++lipo_smiles = lipo_dataset[0].ids
++#%%
++mfp_lipo = []
++
++for i in range(len(lipo_smiles)):
++  mol = Chem.MolFromSmiles(lipo_smiles[i])
++  fp = rdFingerprintGenerator.GetMorganGenerator(radius = 2, fpSize = 1024).GetFingerprint(mol)
++  mfp_lipo.append(fp)
++#%%
++lipo_dataset = molnet_dataset(mfp_lipo,'lipo')
++lipo_spectra = molnet_tanimoto_spectra(lipo_dataset, binary = False)
++lipo_spectra.pre_calculate_spectra_properties('lipo', force_recalculate = False)
++#%%
++lipo_spectra.generate_spectra_splits(**spectra_parameters)
++#%%
++stats_lipo = lipo_spectra.return_all_split_stats()
++stats_lipo_df = pd.DataFrame(stats_lipo).sort_values(by = 'SPECTRA_parameter', ascending = True)
++
++print('SPECTRA Splits on Lipo')
++print('----------------------')
++for index, row in stats_lipo_df.iterrows():
++  print(f'SPECTRA parameter: {row["SPECTRA_parameter"]}')
++  print(f'Train size: {row["train_size"]} | Test size: {row["test_size"]}')
++  print(f'Cross split overlap: {row["cross_split_overlap"]} \n')
++#%%
++import matplotlib.pyplot as plt
++plt.scatter(stats_lipo['SPECTRA_parameter'], stats_lipo['cross_split_overlap'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Cross split overlap')
++plt.title('SPECTRA Splits of Lipo')
++plt.show()
++#%%
++plt.scatter(stats_lipo['SPECTRA_parameter'], stats_lipo['train_size'])
++plt.scatter(stats_lipo['SPECTRA_parameter'], stats_lipo['test_size'])
++plt.xlabel('SPECTRA parameter')
++plt.ylabel('Split size')
++plt.legend(['Train','Test'])
++plt.title('SPECTRA Splits of Lipo')
++plt.show()
++#%%
++tasks, tox21_dataset, transformers = dc.molnet.load_tox21(splitter = None,reload = False)
++tox21_smiles = tox21_dataset[0].ids
++
++mfp_tox21 = []
++for i in range(len(tox21_smiles)):
++    mol = Chem.MolFromSmiles(tox21_smiles[i])
++    fp = rdFingerprintGenerator.GetMorganGenerator(radius = 2, fpSize = 1024).GetFingerprint(mol)
++    mfp_tox21.append(fp)
++#%%
++tox21_dataset = molnet_dataset(mfp_tox21,'tox21')
++tox21_spectra = molnet_tanimoto_spectra(tox21_dataset, binary = False)
++tox21_spectra.pre_calculate_spectra_properties('tox21')
++#%%
++tox21_spectra.generate_spectra_splits(**spectra_parameters)
++#%%
+Index: code/splits.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/code/splits.py b/code/splits.py
+new file mode 100644
+--- /dev/null	(date 1754270550011)
++++ b/code/splits.py	(date 1754270550011)
+@@ -0,0 +1,78 @@
++import deepchem as dc
++import numpy as np
++import os
++import umap.umap_ as umap
++import pickle
++from sklearn.cluster import KMeans
++
++def generate_random_and_scaffold_splits(dataset_name, base_path):
++    splitter_dic = {"random": dc.splits.RandomSplitter,
++                    "scaffold": dc.splits.ScaffoldSplitter}
++
++    featurizer = dc.feat.CircularFingerprint(radius=2, size=1024)
++    tasks, molnet_dataset, transformers = getattr(dc.molnet, f'load_{dataset_name}')(featurizer = featurizer, splitter=None, reload=False)
++    split_dataset = molnet_dataset[0]
++    all_ids = np.array(split_dataset.ids)
++
++    for split_type, splitter_type in splitter_dic.items():
++        save_dir = os.path.join(base_path, split_type, dataset_name)
++        os.makedirs(save_dir, exist_ok=True)
++        splitter = splitter_type()
++
++        for index, value in enumerate([42, 43, 44, 45, 46]):
++            train, test = splitter.train_test_split(split_dataset, frac_train = 0.8, seed = value)
++            train_smiles = set(train.ids)
++            test_smiles = set(test.ids)
++
++            train_indices = [index for index, smiles in enumerate(all_ids) if smiles in train_smiles]
++            test_indices = [index for index, smiles in enumerate(all_ids) if smiles in test_smiles]
++
++            assert len(set(train_indices) & set(test_indices)) == 0
++            assert len(set(train_indices + test_indices)) == len(all_ids)
++
++            print(f"{dataset_name} split {split_type} {index}")
++
++            with open(os.path.join(save_dir, f"{dataset_name}_{split_type}_train_split_{index}.pkl"), "wb") as f:
++                pickle.dump(train_indices, f)
++
++            with open(os.path.join(save_dir, f"{dataset_name}_{split_type}_test_split_{index}.pkl"), "wb") as f:
++                pickle.dump(test_indices, f)
++    return print("Random and scaffold splits done.")
++
++def generate_umap_splits(dataset_name, base_path, n_clusters = 7):
++    featurizer = dc.feat.CircularFingerprint(radius=2, size=1024)
++    tasks, molnet_dataset, transformers = getattr(dc.molnet, f'load_{dataset_name}')(featurizer=featurizer, splitter=None, reload=False)
++    mfp_dataset = molnet_dataset[0].X
++    test_size = round(0.2 * len(mfp_dataset), 0)
++
++    umap_save_dir = os.path.join(base_path, f"umap/{dataset_name}")
++    os.makedirs(umap_save_dir, exist_ok=True)
++
++    for index, value in enumerate([42, 43, 44, 45, 46]):
++        mfp_umap = umap.UMAP(n_components = 2, transform_seed = value).fit_transform(mfp_dataset)
++        kmeans = KMeans(n_clusters = n_clusters, random_state = value)
++        cluster_labels = kmeans.fit_predict(mfp_umap)
++
++        cluster_index, counts = np.unique(cluster_labels, return_counts=True)
++        difference_list = [abs(test_size - i) for i in counts]
++        min_cluster_index = difference_list.index(min(difference_list))
++        umap_test_indices = np.where(cluster_labels == min_cluster_index)[0]
++        umap_train_indices = np.where(cluster_labels != min_cluster_index)[0]
++
++        assert len(set(umap_train_indices) & set(umap_test_indices)) == 0
++        assert len(set(np.concatenate([umap_train_indices, umap_test_indices]))) == len(mfp_dataset)
++
++        with open(os.path.join(umap_save_dir, f"{dataset_name}_umap_train_split_{index}.pkl"), "wb") as f:
++                pickle.dump(umap_train_indices, f)
++
++        with open(os.path.join(umap_save_dir, f"{dataset_name}_umap_test_split_{index}.pkl"), "wb") as f:
++                pickle.dump(umap_test_indices, f)
++    return print("UMAP splits done.")
++
++if __name__ == "__main__":
++    datasets = ['bace_classification', 'tox21', 'bbbp', 'sider', 'clintox', 'hiv', 'delaney', 'freesolv', 'lipo']
++    base_path = "/Users/ivymac/Desktop/SAGE_Lab"
++
++    for dataset in datasets:
++        generate_random_and_scaffold_splits(dataset, base_path)
++        generate_umap_splits(dataset, base_path)
+\ No newline at end of file
+Index: notebook/chemprop.ipynb
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/notebook/chemprop.ipynb b/notebook/chemprop.ipynb
+new file mode 100644
+--- /dev/null	(date 1754792236115)
++++ b/notebook/chemprop.ipynb	(date 1754792236115)
+@@ -0,0 +1,109 @@
++#%%
++!git clone https://github.com/chemprop/chemprop.git
++#%%
++import deepchem as dc
++import chemprop
++from chemprop import featurizers, data, nn, models
++import os
++import pandas as pd
++import numpy as np
++import pickle
++import rdkit
++from rdkit import Chem
++from lightning import pytorch as pl
++#%%
++with open('/Users/ivymac/Desktop/SAGE_Lab/data/random/bace_classification/bace_classification_random_train_split_0.pkl', 'rb') as f:
++    bace_train_indices = pickle.load(f)
++
++with open('/Users/ivymac/Desktop/SAGE_Lab/data/random/bace_classification/bace_classification_random_test_split_0.pkl', 'rb') as f:
++    bace_test_indices = pickle.load(f)
++
++print(bace_test_indices)
++print(bace_train_indices)
++print(len(bace_train_indices))
++print(len(bace_test_indices))
++#%%
++tasks, bace_dataset, transformer = dc.molnet.load_bace_classification(splitter = None, reload = False)
++#%%
++bace_array = bace_dataset[0].ids
++tasks_array = bace_dataset[0].y
++
++all_data_bace = [data.MoleculeDatapoint.from_smi(smi,y) for smi,y in zip(bace_array,tasks_array)]
++train_data = [all_data_bace[i] for i in bace_train_indices]
++test_data = [all_data_bace[i] for i in bace_test_indices]
++
++featurizer = featurizers.SimpleMoleculeMolGraphFeaturizer()
++train_dset = data.MoleculeDataset(train_data, featurizer=featurizer)
++test_dset = data.MoleculeDataset(test_data, featurizer=featurizer)
++
++train_loader = data.build_dataloader(train_dset)
++test_loader = data.build_dataloader(test_dset)
++
++y_train = np.array([train_dset[j].y for j in range(len(train_dset))])
++y_test = np.array(test_dset[j] for j in range(len(test_dset))).flatten()
++assert np.any(y_train == 0) and np.any(y_train == 1)
++#assert np.any(y_test == 0) and np.any(y_test == 1)
++y_train
++#%%
++
++mp = nn.BondMessagePassing()
++agg = nn.MeanAggregation()
++ffn = nn.BinaryClassificationFFN()
++batch_norm = False
++metric_list = [nn.metrics.BinaryAUROC(), nn.metrics.BinaryF1Score(), nn.metrics.BinaryAccuracy()]
++mpnn = models.MPNN(mp,agg,ffn,batch_norm, metric_list)
++mpnn
++#%%
++trainer = pl.Trainer(
++    logger = False,
++    enable_checkpointing =True,
++    enable_progress_bar = True,
++    accelerator = "gpu",
++    max_epochs = 20)
++#%%
++trainer.fit(mpnn, train_loader)
++#%%
++results = trainer.test(mpnn, test_loader)
++results
++
++row = pd.DataFrame([results],index = [f'bace_random_1'])
++
++df = pd.DataFrame()
++df
++#%%
++df = pd.DataFrame(results, index = [f'bace_random_1'])
++df
++#%%
++results[0]['test/roc']
++#%%
++from pathlib import Path
++from os.path import join
++#%%
++path = '/Users/ivymac/Desktop/SAGE_Lab/chemprop'
++filename = "bace_chemprop_metrics.csv"
++#%%
++metrics = {k[5:]:v for k,v in results[0].items()}
++metrics
++#%%
++row = pd.DataFrame(metrics, index = ['bace_1'])
++csv_path = join(path, filename)
++row.to_csv(csv_path)
++#%%
++tasks, bbbp, transformer = dc.molnet.load_bbbp(splitter = None, reload = False)
++bbbp[0]
++#%%
++tasks, clintox, transformer = dc.molnet.load_clintox(splitter = None, reload = False)
++clintox[0]
++#%%
++tasks, delaney, transformer = dc.molnet.load_delaney(splitter = None, reload = False)
++delaney[0].y
++#%%
++tasks, freesolv, transformer = dc.molnet.load_freesolv(splitter = None, reload = False)
++freesolv[0].y
++#%%
++tasks, lipo, transformer = dc.molnet.load_lipo(splitter = None, reload = False)
++lipo[0].y
++#%%
++tasks, sider, transformer = dc.molnet.load_sider(splitter = None, reload = False)
++sider[0]
++#%%
