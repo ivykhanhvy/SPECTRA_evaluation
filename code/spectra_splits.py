@@ -1,3 +1,4 @@
+import os
 import deepchem as dc
 from spectrae import Spectra, SpectraDataset
 import numpy as np
@@ -48,15 +49,22 @@ class MolnetHammingSpectra(Spectra):
         average_similarity.append(self.spectra_properties(i,j))
     return np.mean(average_similarity)
 
-def generate_spectra_tanimoto_splits(dataset_name, spectra_parameters):
-  tasks, molnet_dataset, transformers = getattr(dc.molnet, f'load_{dataset_name}')(splitter=None,reload=False)
-  dataset_smiles = molnet_dataset[0].ids
+def convert_to_morgan_fingerprint(dataset_name, base_path):
+  dataset = pd.read_csv(f'{base_path}/{dataset_name}.csv')
+  dataset_smiles = dataset['smiles']
 
   mfp = []
   for i in range(len(dataset_smiles)):
     mol = Chem.MolFromSmiles(dataset_smiles[i])
     fp = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=1024).GetFingerprint(mol)
     mfp.append(fp)
+
+  return mfp
+
+def generate_spectra_tanimoto_splits(dataset_name, spectra_parameters, base_path):
+  mfp = convert_to_morgan_fingerprint(dataset_name, base_path)
+  save_dir = f'{base_path}/split/spectra_tanimoto/{dataset_name}'
+  os.makedirs(save_dir, exist_ok=True)
 
   spectra_dataset = MolnetDataset(mfp, f'{dataset_name}')
   tanimoto_spectra = MolnetTanimotoSpectra(spectra_dataset, binary=False)
@@ -68,20 +76,14 @@ def generate_spectra_tanimoto_splits(dataset_name, spectra_parameters):
 
   return stats_df
 
-def generate_spectra_hamming_splits(dataset_name, spectra_parameters):
-  tasks, molnet_dataset, transformers = getattr(dc.molnet, f'load_{dataset_name}')(splitter=None, reload=False)
-  dataset_smiles = molnet_dataset[0].ids
-
-  mfp = []
-  for i in range(len(dataset_smiles)):
-    mol = Chem.MolFromSmiles(dataset_smiles[i])
-    fp = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=1024).GetFingerprint(mol)
-    mfp.append(fp)
-  mfp = np.array(mfp)
+def generate_spectra_hamming_splits(dataset_name, spectra_parameters, base_path):
+  mfp = np.array(convert_to_morgan_fingerprint(dataset_name, base_path))
+  save_dir = f'{base_path}/split/spectra_hamming/{dataset_name}'
+  os.makedirs(save_dir, exist_ok=True)
 
   spectra_dataset = MolnetDataset(mfp, f'{dataset_name}')
-  hamming_spectra = MolnetHammingSpectra(spectra_dataset, binary=False)
-  hamming_spectra.pre_calculate_spectra_properties(f'{dataset_name}', force_recalculate=False)
+  hamming_spectra = MolnetHammingSpectra(spectra_dataset, binary = False)
+  hamming_spectra.pre_calculate_spectra_properties(f'{dataset_name}', force_recalculate = False)
   hamming_spectra.generate_spectra_splits(**spectra_parameters)
 
   stats = hamming_spectra.return_all_split_stats()
@@ -90,14 +92,13 @@ def generate_spectra_hamming_splits(dataset_name, spectra_parameters):
   return stats_df
 
 if __name__ == "__main__":
-    datasets = ['tox21']
+    datasets = ['sider']
     #datasets = ['bace_classification', 'bbbp', 'sider', 'clintox', 'delaney', 'freesolv', 'lipo']
     spectra_parameters = {'number_repeats': 3,
                           'random_seed': [42, 44, 46],
-                          'spectral_parameters': ["{:.2f}".format(i) for i in np.arange(0, 1.05, 0.05)],
+                          'spectral_parameters': ["{:.2f}".format(i) for i in np.arange(0, 1.05, 1)],
                           'force_reconstruct': False,
                           }
-
+    base_path = '/Users/ivymac/Desktop/SAGE_Lab/dataset'
     for dataset in datasets:
-        generate_spectra_tanimoto_splits(dataset, spectra_parameters)
-        generate_spectra_hamming_splits(dataset, spectra_parameters)
+        generate_spectra_tanimoto_splits(dataset, spectra_parameters,base_path)

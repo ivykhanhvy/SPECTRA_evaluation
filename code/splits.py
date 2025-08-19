@@ -3,16 +3,27 @@ import numpy as np
 import os
 import umap.umap_ as umap
 import pickle
+import pandas as pd
+import rdkit.Chem as Chem
+from rdkit.Chem import rdFingerprintGenerator
 from sklearn.cluster import KMeans
+
+def convert_to_numpy_dataset(dataset_name, base_path):
+    df = pd.read_csv(f"{base_path}/dataset/{dataset_name}.csv")
+
+    mfp = []
+    for i in range(len(df['smiles'])):
+        mol = Chem.MolFromSmiles(df['smiles'][i])
+        fp = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=1024).GetFingerprint(mol)
+        mfp.append(fp)
+
+    numpy_dataset = dc.data.NumpyDataset(y=df.drop(columns='smiles').values, ids=df['smiles'].values, X = mfp)
+    return numpy_dataset, df
 
 def generate_random_and_scaffold_splits(dataset_name, base_path):
     splitter_dic = {"random": dc.splits.RandomSplitter,
                     "scaffold": dc.splits.ScaffoldSplitter}
-
-    featurizer = dc.feat.CircularFingerprint(radius=2, size=1024)
-    tasks, molnet_dataset, transformers = getattr(dc.molnet, f'load_{dataset_name}')(featurizer = featurizer, splitter=None, reload=False)
-    split_dataset = molnet_dataset[0]
-    all_ids = np.array(split_dataset.ids)
+    dataset, df = convert_to_numpy_dataset(dataset_name, base_path)
 
     for split_type, splitter_type in splitter_dic.items():
         save_dir = os.path.join(base_path, split_type, dataset_name)
@@ -20,15 +31,19 @@ def generate_random_and_scaffold_splits(dataset_name, base_path):
         splitter = splitter_type()
 
         for index, value in enumerate([42, 43, 44, 45, 46]):
-            train, test = splitter.train_test_split(split_dataset, frac_train = 0.8, seed = value)
+            train, test = splitter.train_test_split(dataset, frac_train = 0.8, seed = value)
             train_smiles = set(train.ids)
             test_smiles = set(test.ids)
 
-            train_indices = [index for index, smiles in enumerate(all_ids) if smiles in train_smiles]
-            test_indices = [index for index, smiles in enumerate(all_ids) if smiles in test_smiles]
+            train_indices = [index for index, smiles in enumerate(dataset.ids) if smiles in train_smiles]
+            test_indices = [index for index, smiles in enumerate(dataset.ids) if smiles in test_smiles]
+
+            print(f"train: {train_indices}")
+            print(f"test: {test_indices}")
+            print(len(set(train_indices) & set(test_indices)))
 
             assert len(set(train_indices) & set(test_indices)) == 0
-            assert len(set(train_indices + test_indices)) == len(all_ids)
+            assert len(set(train_indices + test_indices)) == len(dataset.ids)
 
             print(f"{dataset_name} split {split_type} {index}")
 
@@ -40,9 +55,8 @@ def generate_random_and_scaffold_splits(dataset_name, base_path):
     return print("Random and scaffold splits done.")
 
 def generate_umap_splits(dataset_name, base_path, n_clusters = 7):
-    featurizer = dc.feat.CircularFingerprint(radius=2, size=1024)
-    tasks, molnet_dataset, transformers = getattr(dc.molnet, f'load_{dataset_name}')(featurizer=featurizer, splitter=None, reload=False)
-    mfp_dataset = molnet_dataset[0].X
+    dataset, df = convert_to_numpy_dataset(dataset_name, base_path)
+    mfp_dataset = dataset.X
     test_size = round(0.2 * len(mfp_dataset), 0)
 
     umap_save_dir = os.path.join(base_path, f"umap/{dataset_name}")
@@ -70,7 +84,7 @@ def generate_umap_splits(dataset_name, base_path, n_clusters = 7):
     return print("UMAP splits done.")
 
 if __name__ == "__main__":
-    datasets = ['bace_classification', 'tox21', 'bbbp', 'sider', 'clintox', 'hiv', 'delaney', 'freesolv', 'lipo']
+    datasets = ['bace_classification', 'bbbp','clintox','delaney','freesolv','hiv','lipo','sider','tox21']
     base_path = "/Users/ivymac/Desktop/SAGE_Lab"
 
     for dataset in datasets:
