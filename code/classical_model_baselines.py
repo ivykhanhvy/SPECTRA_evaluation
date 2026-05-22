@@ -165,7 +165,7 @@ def run_pipeline():
         "delaney": ["KRR", "LinReg"], # regression
         "freesolv": ["KRR", "LinReg"], # regression
         "lipo": ["KRR", "LinReg"], # regression
-        #"clintox": ["LogReg", "RF", "XGB", "SVM"], # multitask binary classification
+        "clintox": ["LogReg", "RF", "XGB", "SVM"], # multitask binary classification
         "sider": ["LogReg", "RF", "XGB", "SVM"], # multitask binary classification
         "tox21": ["LogReg", "RF", "XGB", "SVM"] # multitask binary classification
     }
@@ -190,7 +190,7 @@ def run_pipeline():
         "KRR": ["root_mean_squared_error"]
     }
 
-    split_types = ["spectra_tanimoto"] #, "random", "scaffold", "umap"]
+    split_types = ["scaffold"] #, "spectra_tanimoto", "random", "scaffold", "umap"]
     results = []
 
     for dataset in dataset_model_dict.keys():
@@ -201,7 +201,7 @@ def run_pipeline():
             if split_type == "spectra_tanimoto":
                 split_num_options = generate_spectra_split_options(dataset)
                 print(split_num_options)
-            for split_num in split_num_options[:2]: # TODO change this back!!
+            for split_num in split_num_options:
                 X_train, X_test, y_train, y_test = load_split(dataset, split_type, split_num)
 
                 if y_train.shape[1] == 1 and y_test.shape[1] == 1:
@@ -245,14 +245,14 @@ def run_pipeline():
                 print(results)
 
         results_df_tmp = pd.DataFrame(results)
-        results_df_tmp.to_csv("../statistical_analyses/classical_baselines_tmp.csv",
+        results_df_tmp.to_csv("../statistical_analyses/classical_baselines_tmp_scaf.csv",
                               index=False)
         print("\nAverage performance (so far):")
         print(results_df_tmp.groupby("model").mean(numeric_only=True))
 
     results_df = pd.DataFrame(results)
 
-    results_df.to_csv("../statistical_analyses/classical_baselines.csv", index=False)
+    results_df.to_csv("../statistical_analyses/classical_baselines_scaf.csv", index=False)
 
     print("\nAverage performance:")
     print(results_df.groupby("model").mean(numeric_only=True))
