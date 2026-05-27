@@ -217,7 +217,7 @@ def run_pipeline():
                     if dataset_task_num_dict[dataset] == 1:
                         model.fit(X_train, y_train)
                         metrics = evaluate_model(model, model_metrics[model_name], X_test, y_test)
-                    else: # multitask model, make sure to get rid of missing values
+                    else: # multitask model, accounts for missing values
                         metrics = {
                             j: [] for j in model_metrics[model_name]
                         }
