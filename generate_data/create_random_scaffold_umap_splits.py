@@ -109,8 +109,8 @@ def generate_umap_splits(dataset_name, base_path, n_clusters = 7):
     mfp_dataset = dataset.X
     test_size = round(0.2 * len(mfp_dataset), 0)
 
-    umap_save_dir = os.path.join(base_path, f"splits/umap/{dataset_name}")
-    umap_save_dir_plot = os.path.join(base_path, f"splits/umap/{dataset_name}/plot")
+    umap_save_dir = os.path.join(base_path, f"raw_splits/umap/{dataset_name}")
+    umap_save_dir_plot = os.path.join(base_path, f"raw_splits/umap/{dataset_name}/plot")
     os.makedirs(umap_save_dir, exist_ok=True)
     os.makedirs(umap_save_dir_plot, exist_ok=True)
 

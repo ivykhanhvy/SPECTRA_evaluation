@@ -19,7 +19,7 @@ from sklearn.metrics import accuracy_score, roc_auc_score, root_mean_squared_err
 
 
 SPLIT_DIR = "../splits_data/chemprop_data/"
-DATASET_DIR = "../dataset/curated_dataset"
+DATASET_DIR = "../datasets/curated_datasets"
 
 # Suppress warning messages, because they're unfixable
 lg = RDLogger.logger()
@@ -44,7 +44,6 @@ def load_dataset(dataset):
     for i in range(len(y_orig)):
         for j in range(len(y_orig.columns)):
             y[i, j] = y_orig.iloc[i, j]
-
 
     return X, y
 
@@ -106,7 +105,6 @@ def generate_spectra_split_options(dataset):
     return split_options
 
 
-
 def build_models():
     # Kernel choices and other factors are
     # as described in PMC5868307,
@@ -160,24 +158,24 @@ def run_pipeline():
     # warning: the pipeline takes ~3.5 hrs to run at this point,
     # the multitask models are very slow
     dataset_model_dict = {
-        "bace": ["LogReg", "RF", "XGB", "SVM"], # binary classification
-        "bbbp": ["LogReg", "RF", "XGB", "SVM"], # binary classification
-        "delaney": ["KRR", "LinReg"], # regression
-        "freesolv": ["KRR", "LinReg"], # regression
-        "lipo": ["KRR", "LinReg"], # regression
-        "clintox": ["LogReg", "RF", "XGB", "SVM"], # multitask binary classification
-        "sider": ["LogReg", "RF", "XGB", "SVM"], # multitask binary classification
+        #"bace": ["LogReg", "RF", "XGB", "SVM"], # binary classification
+        #"bbbp": ["LogReg", "RF", "XGB", "SVM"], # binary classification
+        #"delaney": ["KRR", "LinReg"], # regression
+        #"freesolv": ["KRR", "LinReg"], # regression
+        #"lipo": ["KRR", "LinReg"], # regression
+        #"clintox": ["LogReg", "RF", "XGB", "SVM"], # multitask binary classification
+        #"sider": ["LogReg", "RF", "XGB", "SVM"], # multitask binary classification
         "tox21": ["LogReg", "RF", "XGB", "SVM"] # multitask binary classification
     }
 
     dataset_task_num_dict = {
-        "bace": 1,
-        "bbbp": 1,
-        "delaney": 1,
-        "freesolv": 1,
-        "lipo": 1,
-        "clintox": 2,
-        "sider": 27,
+        #"bace": 1,
+        #"bbbp": 1,
+        #"delaney": 1,
+        #"freesolv": 1,
+        #"lipo": 1,
+        #"clintox": 2,
+        #"sider": 27,
         "tox21": 12
     }
 
@@ -190,10 +188,10 @@ def run_pipeline():
         "KRR": ["root_mean_squared_error"]
     }
 
-    split_types = ["scaffold"] #, "spectra_tanimoto", "random", "scaffold", "umap"]
-    results = []
+    split_types = ["spectra_tanimoto", "random", "scaffold", "umap"]
 
     for dataset in dataset_model_dict.keys():
+        results = []
         print(dataset)
         models = build_models()
         for split_type in split_types:
@@ -208,56 +206,56 @@ def run_pipeline():
                     y_train = y_train.ravel()
                     y_test = y_test.ravel()
 
-                print(f"Running split: {dataset} {split_type} {split_num}")
+                run_split = True
+                for col_ix in range(y_train.shape[1]): # go column-by-column
+                    mask_train = ~np.isnan(y_train[:, col_ix])
+                    if sum(y_train[mask_train,col_ix]) == 0 or sum(y_train[mask_train,col_ix]) == sum(mask_train):
+                        print(f"y_train is all 1 or all 0 for some class.")
+                        print(f"{dataset} {split_type} {split_num} could not be trained.")
+                        run_split = False
 
-                for model_name in dataset_model_dict[dataset]:
-                    print(f"Running for model {model_name}")
-                    model = models[model_name]
+                if run_split:
+                    print(f"Running split: {dataset} {split_type} {split_num}")
 
-                    if dataset_task_num_dict[dataset] == 1:
-                        model.fit(X_train, y_train)
-                        metrics = evaluate_model(model, model_metrics[model_name], X_test, y_test)
-                    else: # multitask model, accounts for missing values
-                        metrics = {
-                            j: [] for j in model_metrics[model_name]
+                    for model_name in dataset_model_dict[dataset]:
+                        print(f"Running for model {model_name}")
+                        model = models[model_name]
+
+                        if dataset_task_num_dict[dataset] == 1:
+                            model.fit(X_train, y_train)
+                            metrics = evaluate_model(model, model_metrics[model_name], X_test, y_test)
+                        else: # multitask model, accounts for missing values present in tox21 dataset
+                            metrics = {
+                                j: [] for j in model_metrics[model_name]
+                            }
+                            for col_ix in range(y_train.shape[1]):
+                                mask_train = ~np.isnan(y_train[:, col_ix])
+                                model.fit(X_train[mask_train,:], y_train[mask_train, col_ix])
+
+                                mask_test = ~np.isnan(y_test[:, col_ix])
+                                tmp_metrics = evaluate_model(model, model_metrics[model_name],
+                                                             X_test[mask_test,:], y_test[mask_test, col_ix])
+                                for m in model_metrics[model_name]:
+                                    metrics[m].append(tmp_metrics[m])
+                            metrics = {k: sum(v)/len(v) for k, v in metrics.items()}
+
+                        result = {
+                            "dataset": dataset,
+                            "split_type": split_type,
+                            "split_num": split_num,
+                            "model": model_name,
+                            **metrics
                         }
-                        for col_ix in range(y_train.shape[1]):
-                            mask_train = ~np.isnan(y_train[:, col_ix])
-                            model.fit(X_train[mask_train,:], y_train[mask_train, col_ix])
 
-                            mask_test = ~np.isnan(y_test[:, col_ix])
-                            tmp_metrics = evaluate_model(model, model_metrics[model_name],
-                                                         X_test[mask_test,:], y_test[mask_test, col_ix])
-                            for m in model_metrics[model_name]:
-                                metrics[m].append(tmp_metrics[m])
-                        metrics = {k: sum(v)/len(v) for k, v in metrics.items()}
+                        results.append(result)
 
-                    result = {
-                        "dataset": dataset,
-                        "split_type": split_type,
-                        "split_num": split_num,
-                        "model": model_name,
-                        **metrics
-                    }
-
-                    results.append(result)
-
-                print(results)
+                    print(results)
 
         results_df_tmp = pd.DataFrame(results)
-        results_df_tmp.to_csv("../statistical_analyses/classical_baselines_tmp_scaf.csv",
+        results_df_tmp.to_csv(f"../results/classical_results/classical_baselines_{dataset}.csv",
                               index=False)
         print("\nAverage performance (so far):")
         print(results_df_tmp.groupby("model").mean(numeric_only=True))
-
-    results_df = pd.DataFrame(results)
-
-    results_df.to_csv("../statistical_analyses/classical_baselines_scaf.csv", index=False)
-
-    print("\nAverage performance:")
-    print(results_df.groupby("model").mean(numeric_only=True))
-
-    return results_df
 
 
 if __name__ == "__main__":
