@@ -1,6 +1,7 @@
 import deepchem as dc
 import numpy as np
 import os
+import json
 import umap.umap_ as umap
 import pickle
 import random
@@ -15,7 +16,7 @@ import argparse
 import matplotlib.pyplot as plt
 
 def convert_to_numpy_dataset(dataset_name, base_path):
-    df = pd.read_csv(f"{base_path}/dataset/curated_dataset/{dataset_name}.csv")
+    df = pd.read_csv(f"{base_path}/datasets/curated_datasets/{dataset_name}.csv")
 
     mfp = []
     for i in range(len(df['smiles'])):
@@ -65,6 +66,9 @@ def generate_scaffold_splits(dataset_name, base_path, split_type="scaffold"):
     scaffold_to_ix_map = {
         scaf: [ix for ix, s in enumerate(scaffolds) if s == scaf] for scaf in scaffolds
     }
+
+    with open(os.path.join(base_path, "splits_data", "scaffold_info", f"{dataset_name}.json"), "w") as f:
+        json.dump(scaffold_to_ix_map, f)
 
     save_dir = os.path.join(base_path, split_type, dataset_name)
     os.makedirs(save_dir, exist_ok=True)
@@ -144,9 +148,9 @@ def generate_umap_splits(dataset_name, base_path, n_clusters = 7):
     print(f"UMAP splits {dataset_name} done.")
 
 if __name__ == "__main__":
-    base_path = '../' # the main github directory
+    base_path = '..' # the main github directory
 
-    for dname in ['bace','bbbp','clintox','delaney','freesolv','hiv','lipo','sider','tox21']:
+    for dname in ['bace','bbbp','clintox','delaney','freesolv','lipo','sider','tox21']:
         pass
         # Uncomment to re-run all splits; takes time
         # generate_random_splits(dname, base_path)
