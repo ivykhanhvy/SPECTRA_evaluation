@@ -150,35 +150,7 @@ for (dataset in datasets) {
   perf_vs_cso_df <- rbind(perf_vs_cso_df, tmp_df)
 }
 
-ggplot(perf_vs_cso_df[which(perf_vs_cso_df$dataset %in% reg_datasets),], 
-            aes(x = cso_mean, y = perf_mean)) +
-  geom_point(aes(color = split_type, shape = split_type), size = 2) +
-  geom_errorbar(aes(ymin = perf_mean - perf_sd, ymax = perf_mean + perf_sd, color = split_type), size = 0.4) +
-  geom_errorbarh(aes(xmin = cso_mean - cso_sd, xmax = cso_mean + cso_sd, color = split_type), size = 0.4) +
-  facet_wrap(~dataset, nrow = 2, scales = "free") +
-  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
-  scale_shape_manual(
-    name = "Split type",
-    values = c(
-      spectra = 16,
-      random = 15,
-      scaffold = 17,
-      umap = 18
-    )
-  ) +
-  scale_color_manual(
-    name="Split type",
-    values=my_colors
-  ) +
-  labs(
-    x = "Cross-split overlap",
-    y = "AUC"
-  ) +
-  
-  theme_pubr(base_size = 14) +
-  theme(
-    legend.position = "right",
-    axis.title = element_text(face = "bold"),
-    axis.text.x = element_text(angle = 90, hjust = 1)
-  )
-
+create_performance_v_cso_plot(perf_vs_cso_df[which(perf_vs_cso_df$dataset %in% reg_datasets),],
+                              "AUC",my_colors)
+create_performance_v_cso_plot(perf_vs_cso_df[which(perf_vs_cso_df$dataset %in% class_datasets),],
+                              "RMSE",my_colors)
