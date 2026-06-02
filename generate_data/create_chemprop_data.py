@@ -119,5 +119,6 @@ if __name__ == '__main__':
     parser.add_argument('--base_path', type=str, required=True)
     parser.add_argument('--split_type', type=str, required=False)
     args = parser.parse_args()
+    hpopt_random_split(args.base_path, args.dataset_name)
     chemprop_data(args.base_path, args.dataset_name, args.split_type)
     

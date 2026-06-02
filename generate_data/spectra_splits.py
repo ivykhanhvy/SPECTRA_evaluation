@@ -50,7 +50,6 @@ def convert_to_morgan_fingerprint(dataset_name, base_path):
   mfp = []
   for i in range(len(dataset_smiles)):
     mol = Chem.MolFromSmiles(dataset_smiles[i])
-    print(i)
     fp = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=1024).GetFingerprint(mol)
     mfp.append(fp)
 
@@ -71,63 +70,14 @@ def generate_spectra_tanimoto_splits(dataset_name, spectra_parameters, base_path
 
   return stats_df
 
-def random_scaffold_umap_cross_split_overlap(dataset_name, split_type, base_path):
-  mfp = convert_to_morgan_fingerprint(dataset_name, base_path)
-  print(len(mfp))
-  for i in range(5):
-    with open(join(base_path,
-                 f'raw_splits/{split_type}/{dataset_name}/{dataset_name}_{split_type}_train_split_{i}.pkl'),
-            'rb') as f:
-      train_indices = pickle.load(f)
-      print(train_indices)
-
-    with open(join(base_path,
-                 f'raw_splits/{split_type}/{dataset_name}/{dataset_name}_{split_type}_test_split_{i}.pkl'),
-            'rb') as f:
-      test_indices = pickle.load(f)
-      print(test_indices)
-
-    train = [mfp[m] for m in train_indices]
-    print(len(train))
-    test = [mfp[n] for n in test_indices]
-    print(len(test))
-
-    average_similarity = []
-    for train_mfp in train:
-      for test_mfp in test:
-        average_similarity.append(TanimotoSimilarity(train_mfp, test_mfp))
-
-    cross_split_overlap = np.mean(average_similarity)
-
-    dir = f'splits/{split_type}/{dataset_name}'
-    filename = f'{dataset_name}_{split_type}_cross_split_overlap.csv'
-    csv_path = join(base_path, dir, filename)
-
-    row = pd.DataFrame({'train_size': len(train),
-                         'test_size': len(test),
-                        'cross_split_overlap': cross_split_overlap}, index=[f'{dataset_name}_{split_type}_{i}'])
-    if Path(csv_path).exists():
-      df = pd.read_csv(csv_path, index_col=0)
-      col_order = df.columns.tolist()
-      row = row[col_order]
-      df = pd.concat([df, row], axis=0)
-    else:
-      df = row
-
-    df.to_csv(csv_path)
-  return print(f'Done with {dataset_name}_{split_type}')
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'Run SPECTRA Taniomoto Splits')
     parser.add_argument('--dataset_name', type =str, required=True)
     parser.add_argument('--base_path', type=str, required=True)
-    parser.add_argument('--split_type', type=str, required=True )
     args = parser.parse_args()
     spectra_parameters = {'number_repeats': 3,
                           'random_seed': [42, 44, 46],
                           'spectral_parameters': ["{:.2f}".format(i) for i in np.arange(0, 1.05, 0.05)],
-                          'force_reconstruct':False,
-                          }
+                          'force_reconstruct':False}
+    generate_spectra_tanimoto_splits(args.dataset_name, spectra_parameters, args.base_path)
     
-    random_scaffold_umap_cross_split_overlap(args.dataset_name, args.split_type, args.base_path)
- 
