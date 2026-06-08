@@ -158,9 +158,10 @@ def generate_umap_splits(dataset_name, base_path, n_clusters = 7):
     print(f"UMAP splits {dataset_name} done.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description = 'Create random, scaffold, or UMAP splits')
-    parser.add_argument('--dataset_name', type =str, required=True)
-    parser.add_argument('--base_path', type=str, required=True)
-    parser.add_argument('--split_type', type=str, required=False)
-    args = parser.parse_args()
-    generate_umap_splits(args.dataset_name, args.base_path)
+    base_path = '..'
+    #Uncomment the desired split generation functions below.
+    for dataset_name in ['bace', 'bbbp', 'clintox', 'delaney', 'freesolv', 'lipo', 'sider', 'tox21']:
+        #generate_random_splits(dataset_name, base_path)
+        #generate_scaffold_splits(dataset_name, base_path)
+        #generate_umap_splits(dataset_name, base_path)
+
