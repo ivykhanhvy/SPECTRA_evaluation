@@ -2,17 +2,17 @@ import deepchem as dc
 import numpy as np
 import os
 import json
+import umap.umap_ as umap
 import pickle
 import random
 import pandas as pd
-
-import umap.umap_ as umap
 
 import rdkit.Chem as Chem
 from rdkit.Chem import rdFingerprintGenerator
 from rdkit.Chem.Scaffolds.MurckoScaffold import GetScaffoldForMol
 
 from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 import argparse
 import matplotlib.pyplot as plt
 
@@ -113,6 +113,7 @@ def generate_umap_splits(dataset_name, base_path, n_clusters = 7):
     dataset, df, mfp = convert_to_numpy_dataset(dataset_name, base_path)
     mfp_dataset = dataset.X
     test_size = round(0.2 * len(mfp_dataset), 0)
+    s_results = []
 
     umap_save_dir = os.path.join(base_path, f"raw_splits/umap/{dataset_name}")
     umap_save_dir_plot = os.path.join(base_path, f"raw_splits/umap/{dataset_name}/plot")
@@ -123,9 +124,13 @@ def generate_umap_splits(dataset_name, base_path, n_clusters = 7):
         mfp_umap = umap.UMAP(n_neighbors = 15, n_components = 2, transform_seed = value).fit_transform(mfp_dataset)
         kmeans = KMeans(n_clusters = n_clusters, random_state = value)
         cluster_labels = kmeans.fit_predict(mfp_umap)
+        s_score = silhouette_score(mfp_umap, cluster_labels)[0]
+        s_results.append({'dataset': f'{dataset_name}_{index}',
+                          'silhouette_score': {s_score}})
+
 
         plt.figure(figsize=(6,6))
-        plt.scatter(mfp_umap[:, 0], mfp_umap[:, 1], c=cluster_labels,s=50,alpha=1.0)
+        plt.scatter(mfp_umap[:, 0], mfp_umap[:, 1], c = cluster_labels)
         plt.title(f"{dataset_name} - UMAP embedding {index}")
         plt.xlabel("UMAP-1")
         plt.ylabel("UMAP-2")
@@ -146,14 +151,16 @@ def generate_umap_splits(dataset_name, base_path, n_clusters = 7):
 
         with open(os.path.join(umap_save_dir, f"{dataset_name}_umap_test_split_{index}.pkl"), "wb") as f:
                 pickle.dump(umap_test_indices, f)
+    silhouette_df = pd.DataFrame(s_results)
+    s_results_save_dir = os.path.join('splits_data', 'umap_silhouette_results')
+    os.makedirs(s_results_save_dir)
+    silhouette_df.to_csv(os.path.join(s_results_save_dir, f'{dataset_name}_silhouette_scores.csv'))
     print(f"UMAP splits {dataset_name} done.")
 
 if __name__ == "__main__":
-    base_path = '..' # the main github directory
-
-    for dname in ['bace','bbbp','clintox','delaney','freesolv','lipo','sider','tox21']:
-        pass
-        # Uncomment to re-run all splits; takes time
-        # generate_random_splits(dname, base_path)
-        # generate_scaffold_splits(dname, base_path)
-        # generate_umap_splits(dname, base_path)
+    parser = argparse.ArgumentParser(description = 'Create random, scaffold, or UMAP splits')
+    parser.add_argument('--dataset_name', type =str, required=True)
+    parser.add_argument('--base_path', type=str, required=True)
+    parser.add_argument('--split_type', type=str, required=False)
+    args = parser.parse_args()
+    generate_umap_splits(args.dataset_name, args.base_path)

@@ -7,20 +7,20 @@
 #SBATCH --gpus-per-task=2
 #SBATCH --mem=90G
 #SBATCH --time=24:00:00
-#SBATCH --array=0-3
+#SBATCH --array=0-7
 #SBATCH --mail-type=TIME_LIMIT_80
 #SBATCH --output=slurm_logs/chemprop_hpopt/%x_%A_%a.out
 #SBATCH --error=slurm_logs/chemprop_hpopt/%x_%A_%a.err
 
 project_dir=/home/vndo_umass_edu
 
-datasets=(delaney freesolv lipo tox21)
+datasets=(bace bbbp clintox delaney freesolv lipo sider tox21)
 current_dataset=${datasets[$SLURM_ARRAY_TASK_ID]}
 
 echo "Running $current_dataset"
 
 results_dir=$project_dir/chemprop_hpopt/$current_dataset
-data_path=$project_dir/splits_data/hpopt/$current_dataset/data.csv
+data_path=$project_dir/splits_data/chemprop_hpopt/$current_dataset/data.csv
 splits_path=$project_dir/splits_data/hpopt/$current_dataset/data.json
 RAY_TEMP_DIR=$project_dir/ray/ray_temp
 
