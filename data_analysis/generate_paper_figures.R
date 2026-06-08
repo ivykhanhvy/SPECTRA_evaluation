@@ -1,3 +1,5 @@
+library(xtable)
+
 source("./data_analysis/helpers.R")
 
 perf_dat <- read.csv("./data_analysis/all_split_performance_data.csv")
@@ -26,7 +28,78 @@ for (model in unique(class_df$model)) {
                                   model,"RMSE", comparisons, my_colors)
 }
 
+# for creating table
+df_agg <- aggregate(metric ~ dataset + model + split_type, 
+                        FUN=median, data=rbind(reg_df, class_df))
+df_agg_wide <- df_agg %>%
+  pivot_wider(
+    names_from = split_type,
+    values_from = metric
+  )
+df_agg_wide$s_vs_r <- apply(df_agg_wide, 1, function(x) {
+  if (x["dataset"] %in% reg_datasets) {
+    scaf_dat <- reg_df[which(reg_df$model == x["model"] & 
+                               reg_df$split_type == "scaffold" &
+                               reg_df$dataset == x["dataset"]),"metric"]
+    rand_dat <- reg_df[which(reg_df$model == x["model"] & 
+                               reg_df$split_type == "random" &
+                               reg_df$dataset == x["dataset"]),"metric"]
+    
+  } else {
+    scaf_dat <- class_df[which(class_df$model == x["model"] & 
+                                 class_df$split_type == "scaffold" &
+                                 class_df$dataset == x["dataset"]),"metric"]
+    rand_dat <- class_df[which(class_df$model == x["model"] & 
+                                 class_df$split_type == "random" &
+                                 class_df$dataset == x["dataset"]),"metric"]
+  }
+  wilcox.test(rand_dat, scaf_dat)$p.value
+})
 
+df_agg_wide$u_vs_r <- apply(df_agg_wide, 1, function(x) {
+  if (x["dataset"] %in% reg_datasets) {
+    umap_dat <- reg_df[which(reg_df$model == x["model"] & 
+                               reg_df$split_type == "umap" &
+                               reg_df$dataset == x["dataset"]),"metric"]
+    rand_dat <- reg_df[which(reg_df$model == x["model"] & 
+                               reg_df$split_type == "random" &
+                               reg_df$dataset == x["dataset"]),"metric"]
+    
+  } else {
+    umap_dat <- class_df[which(class_df$model == x["model"] & 
+                                 class_df$split_type == "umap" &
+                                 class_df$dataset == x["dataset"]),"metric"]
+    rand_dat <- class_df[which(class_df$model == x["model"] & 
+                                 class_df$split_type == "random" &
+                                 class_df$dataset == x["dataset"]),"metric"]
+  }
+  wilcox.test(rand_dat, umap_dat)$p.value
+})
+
+p_to_stars <- function(x) {
+  if (x < 0.001) {
+    return("***")
+  } else if (x < 0.01) {
+    return("**")
+  } else if (x < 0.05) {
+    return ("*")
+  } else {
+    return(".")
+  }
+}
+
+df_agg_wide$s_vs_r <- sapply(
+  p.adjust(df_agg_wide$s_vs_r, method="bonferroni"),
+  p_to_stars)
+df_agg_wide$u_vs_r <- sapply(
+  p.adjust(df_agg_wide$u_vs_r, method="bonferroni"),
+  p_to_stars)
+
+df_agg_wide <- df_agg_wide[order(df_agg_wide$dataset),]
+pt <- xtable(df_agg_wide)
+print(pt,
+      include.rownames = FALSE,
+      digits = 3)
 
 
 #### CSO VS SPLIT_TYPE, 8-way facet
@@ -82,7 +155,7 @@ for (dataset in datasets) {
   
   tmp_df <- data.frame(cso_dat[grep(paste0(dataset, "_spec"), cso_dat$index),] %>%
     group_by(SP) %>%
-    summarise(spectra_mean = mean(cso),
+    dplyr::summarise(spectra_mean = mean(cso),
               spectra_sd = sd(cso)))
   tmp_df$dataset = dataset
   
@@ -115,16 +188,16 @@ for (dataset in datasets) {
   ## collate all the info, starting from the CSOs for the spectra splits
   tmp_df1 <- data.frame(cso_dat[grep(paste0(dataset, "_spec"), cso_dat$index),] %>%
                          group_by(SP) %>%
-                         summarise(cso_mean = mean(cso),
+                         dplyr::summarise(cso_mean = mean(cso),
                                    cso_sd = sd(cso)))
   
   tmp_df2 <- data.frame(perf_dat[which(perf_dat$dataset == dataset & 
                                          perf_dat$split_type == "spectra_tanimoto" & 
                                          perf_dat$model == "chemprop"),] %>%
                         group_by(SP) %>%
-                        summarise(perf_mean = mean(metric), perf_sd = sd(metric)))
+                          dplyr::summarise(perf_mean = mean(metric), perf_sd = sd(metric)))
   
-  tmp_df <- full_join(tmp_df1, tmp_df2, by = "SP")
+  tmp_df <- dplyr::full_join(tmp_df1, tmp_df2, by = "SP")
   tmp_df$split_type = "spectra"
   
   for (split_type in c("random","scaffold","umap")) {
@@ -153,4 +226,4 @@ for (dataset in datasets) {
 create_performance_v_cso_plot(perf_vs_cso_df[which(perf_vs_cso_df$dataset %in% reg_datasets),],
                               "AUC",my_colors)
 create_performance_v_cso_plot(perf_vs_cso_df[which(perf_vs_cso_df$dataset %in% class_datasets),],
-                              "RMSE",my_colors)
+                              "RMSE",my_colors,nrow=1)

@@ -2,10 +2,11 @@ import deepchem as dc
 import numpy as np
 import os
 import json
-import umap.umap_ as umap
 import pickle
 import random
 import pandas as pd
+
+import umap.umap_ as umap
 
 import rdkit.Chem as Chem
 from rdkit.Chem import rdFingerprintGenerator

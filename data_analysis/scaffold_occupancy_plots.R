@@ -63,3 +63,26 @@ plot(c(median(reg_changes[1:5]), median(reg_changes[6:10]), median(reg_changes[1
        median(-1*class_changes[6:10]), median(-1*class_changes[10:15])) ~ c(reg_aucs,class_aucs),
      xlab="Area under the cumulative sum curve", 
      ylab="Model performance (% change in performance)")
+
+
+
+
+
+
+
+reg_csos = c()
+class_csos = c()
+cso_dat <- read.csv("./data_analysis/all_split_size_cso_data.csv")
+for (dataset in datasets) {
+  if (dataset %in% class_datasets) {
+    class_csos = c(class_csos, mean(cso_dat[grep(paste0(dataset,"_scaffold"), cso_dat$index),"cso"] - 
+                                      cso_dat[grep(paste0(dataset,"_random"), cso_dat$index),"cso"]))
+  } else {
+    reg_csos = c(reg_csos, mean(cso_dat[grep(paste0(dataset,"_scaffold"), cso_dat$index),"cso"] - 
+                                  cso_dat[grep(paste0(dataset,"_random"), cso_dat$index),"cso"]))
+  }
+}
+
+plot(c(reg_aucs), c(reg_csos))
+plot(c(class_aucs), c(class_csos))
+plot(c(reg_aucs, class_aucs), c(reg_csos, class_csos))
