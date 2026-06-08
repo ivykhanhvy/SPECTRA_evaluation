@@ -1,4 +1,4 @@
-# **Chemical space separation: Scaffold and UMAP splits may be closer to Random than we think**
+# **Chemical space separation: Scaffold and UMAP splits may be closer to random than we think**
 
 This repository presents a research framework for evaluating chemical data splitting strategies in machine learning and deep learning. We compared state-of-the-art methods including random, scaffold, and UMAP splits by analyzing train–test overlap and its effect on model performance and generalization.
 
@@ -26,19 +26,19 @@ The required packages and their versions are provided in `requirements.txt`.
 pip install -r requirements.txt
 ```
 
-## **Instruction of Running**
+## **Instructions for running the pipeline**
 ### **1. Generate splits**
 Data in `datasets` was curated to remove invalid SMILES structure and 
-replicates using `code/data_curation.py`. Next, random, scaffold, and UMAP 
-splits were generated using `code/splits.py` and SPECTRA splits were 
-generated using `code/spectra_splits.py` to produce 8:2 train:test splits. 
+replicates using `generate_data/data_curation.py`. Next, random, scaffold, and 
+UMAP splits were generated using `generate_data/splits.py` and SPECTRA splits were 
+generated using `generate_data/spectra_splits.py` to produce 8:2 train:test splits. 
 All raw splits were stored as `.pkl` files in `raw_splits`. Next, raw splits 
 were converted to index-based splits with 7:1:2 train:val:test sets stored 
-as `.json` files using `code/chemprop_data.py`. Final index-based splits 
+as `.json` files using `generate_data/chemprop_data.py`. Final index-based splits 
 were stored in `splits_data/hpopt` and `splits_data/chemprop_data` for 
 hyperparameter optimization and model trainin, respectively. Cross-split 
 overlaps of all four splitting strategies was calculated during the 
-execution of `code/cross_split_overlap.py` by taking pairwise Tanimoto 
+execution of `generate_data/cross_split_overlap.py` by taking pairwise Tanimoto 
 Similarity between 7:2 train and test sets (excluding validation set) and 
 stored in `splits_data/cross_split_overlap`. 
 
