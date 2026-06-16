@@ -5,7 +5,6 @@ source("./data_analysis/helpers.R")
 perf_dat <- read.csv("./data_analysis/all_split_performance_data.csv")
 cso_dat <- read.csv("./data_analysis/all_split_size_cso_data.csv")
 
-
 comparisons <- list(
   c("random", "scaffold"),
   c("random", "umap"),

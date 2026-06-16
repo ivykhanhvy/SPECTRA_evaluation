@@ -8,6 +8,9 @@ class_datasets = c("delaney", "freesolv", "lipo")
 
 class_aucs = c()
 reg_aucs = c()
+
+class_avg_occ = c()
+reg_avg_occ = c()
 for (dataset in datasets) {
   print(dataset)
   scaffold_occ <- fromJSON(paste0("splits_data/scaffold_info/",dataset,".json"))
@@ -19,6 +22,8 @@ for (dataset in datasets) {
   tmp_props <- sort(tmp/sum(tmp), decreasing=TRUE)
   tmp_props_cumsum <- cumsum(tmp_props)
   
+  avg_occ <- mean(tmp)
+  
   plot(tmp_props_cumsum~seq(0,1,length=length(tmp_props_cumsum)),ylim=c(0,1))
   abline(a=0,b=1,col="red")
   # AUC
@@ -26,8 +31,10 @@ for (dataset in datasets) {
   print(paste0("AUC: ", auc))
   if (dataset %in% class_datasets) {
     class_aucs = c(class_aucs, auc)
+    class_avg_occ = c(class_avg_occ, avg_occ)
   } else {
     reg_aucs = c(reg_aucs, auc)
+    reg_avg_occ = c(reg_avg_occ, avg_occ)
   }
   
 }
@@ -55,8 +62,6 @@ for (dataset in datasets) {
 plot(c(reg_changes, -1*class_changes) ~ c(rep(reg_aucs,each=5), rep(class_aucs,each=5)),
      xlab="Area under the cumulative sum curve", 
      ylab="Model performance (% change in performance)")
-cor.test(c(rep(reg_aucs,each=5), rep(class_aucs,each=5)), 
-         c(reg_changes, -1*class_changes), method="spearman")
 
 plot(c(median(reg_changes[1:5]), median(reg_changes[6:10]), median(reg_changes[10:15]),
        median(reg_changes[15:20]), median(reg_changes[20:25]), median(-1*class_changes[1:5]), 
@@ -83,6 +88,59 @@ for (dataset in datasets) {
   }
 }
 
-plot(c(reg_aucs), c(reg_csos))
-plot(c(class_aucs), c(class_csos))
-plot(c(reg_aucs, class_aucs), c(reg_csos, class_csos))
+
+
+
+##### PLOTS FOR PAPER 
+# Okabe-Ito palette
+color_map = c(
+  "bace"="#E69F00","bbbp"="#56B4E9","clintox"="#009E73",
+  "delaney"="#F0E442","freesolv"="#0072B2",
+  "lipo"="#D55E00", "sider"="#CC79A7", "tox21"="#000000"
+)
+# plot(c(reg_changes, -1*class_changes) ~ c(rep(reg_avg_occ,each=5), rep(class_avg_occ,each=5)),
+#      col=rep(color_map[datasets],each=5),
+#      pch=19,cex=1.25,
+#      xlab="Mean scaffold group occupancy", 
+#      ylab="Model performance (% change in performance)")
+# legend("topright", 
+#        legend = names(color_map), 
+#        col = color_map, 
+#        pch = c(19), 
+#        #bty = "n", 
+#        pt.cex = 1, 
+#        cex = 0.8, 
+#        text.col = "black", 
+#        horiz = F , 
+#        inset = c(0.1, 0.1))
+
+
+cor.test(c(rep(reg_avg_occ,each=5), rep(class_avg_occ,each=5)), 
+         c(reg_changes, -1*class_changes), method="spearman")
+
+
+
+
+
+
+plot(c(reg_csos, class_csos) ~ c(reg_avg_occ, class_avg_occ),
+     col=color_map[datasets],
+     pch=19,cex=1.25,
+     xlab="Mean scaffold group occupancy", 
+     ylab="Cross-Split Overlap")
+legend("topright", 
+       legend = names(color_map), 
+       col = color_map, 
+       pch = c(19), 
+       #bty = "n", 
+       pt.cex = 1, 
+       cex = 0.8, 
+       text.col = "black", 
+       horiz = F , 
+       inset = c(0.1, 0.1))
+
+
+cor.test(c(reg_csos, class_csos), c(reg_avg_occ, class_avg_occ), method="spearman")
+
+
+
