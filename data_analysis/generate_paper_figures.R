@@ -101,6 +101,10 @@ print(pt,
       digits = 3)
 
 
+
+
+
+
 #### CSO VS SPLIT_TYPE, 8-way facet
 int_indices = c(
   grep("random", cso_dat$index),
@@ -223,8 +227,13 @@ for (model_choice in c("chemprop","RF","XGB","SVM","KRR","LinReg","LogReg")) {
     perf_vs_cso_df <- rbind(perf_vs_cso_df, tmp_df)
   }
   
-  create_performance_v_cso_plot(perf_vs_cso_df[which(perf_vs_cso_df$dataset %in% reg_datasets),],
-                                "AUC",model_choice,my_colors)
-  create_performance_v_cso_plot(perf_vs_cso_df[which(perf_vs_cso_df$dataset %in% class_datasets),],
+  if (model_choice %in% c("chemprop","RF","XGB","SVM","LogReg")) {
+    create_performance_v_cso_plot(perf_vs_cso_df[which(perf_vs_cso_df$dataset %in% reg_datasets),],
+                                  "AUC",model_choice,my_colors)
+  } 
+  
+  if (model_choice %in% c("chemprop","KRR","LinReg")) {
+    create_performance_v_cso_plot(perf_vs_cso_df[which(perf_vs_cso_df$dataset %in% class_datasets),],
                                 "RMSE",model_choice,my_colors,nrow=1)
+  }
 }

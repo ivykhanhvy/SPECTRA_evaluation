@@ -5,7 +5,10 @@ library(tidyr)
 library(reshape)
 
 #my_3_colors = c("green4", "orange","red")
-my_colors = c(random="green4", scaffold="orange",umap="red", spectra="grey50")
+my_colors = c(random="green4", Random="green4", 
+              scaffold="orange", Scaffold="orange",
+              umap="red", UMAP="red",
+              spectra="grey50", SPECTRA="grey50")
 
 datasets = c(
   "bace","bbbp","clintox","delaney","freesolv","lipo","sider","tox21"
@@ -17,10 +20,15 @@ ds_name_map = c(
   "bace"="BACE", "bbbp"="BBBP", "clintox"="ClinTox","delaney"="ESOL",
   "freesolv"="FreeSolv", "lipo"="Lipophilicity","sider"="SIDER","tox21"="Tox21"
 )
+split_type_map = c(
+  "random"="Random", "scaffold"="Scaffold","umap"="UMAP","spectra"="SPECTRA"
+)
 
 create_performance_v_split_plot <- function(data, model_name, metric_name, 
                         comparisons,
                         my_colors, scales="fixed") {
+  data$split_type <- split_type_map[data$split_type]
+  comparisons <- lapply(comparisons, function(x){split_type_map[x]})
   p <- ggplot(
     data,
     aes(split_type, metric, color=split_type),
@@ -45,17 +53,27 @@ create_performance_v_split_plot <- function(data, model_name, metric_name,
     theme_pubr(base_size = 14) +
     theme(
       legend.position = "none",
-      axis.title = element_text(face = "bold")
+      axis.title = element_text(face = "bold"),
+      axis.text.x = element_text(angle = 45, hjust = 1)
     ) + facet_wrap(~dataset, scales=scales,
                    labeller = labeller(dataset = ds_name_map)) +
     ggtitle(model_name)
   
   print(p)
+  if (metric_name == "RMSE") {
+    ggsave(paste0("./plots/",model_name, "_perf_rmse_vs_split_type.pdf"), 
+           plot = p, width = 8, height = 3, units = "in")
+  } else {
+    ggsave(paste0("./plots/",model_name, "_perf_auc_vs_split_type.pdf"), 
+           plot = p, width = 8, height = 5, units = "in")
+  }
 }
 
 
 create_cso_v_split_plot <- function(data, comparisons,
                                     my_colors, scales="fixed") {
+  data$split_type <- split_type_map[data$split_type]
+  comparisons <- lapply(comparisons, function(x){split_type_map[x]}) 
   p <- ggplot(
     data,
     aes(split_type, cso, color=split_type),
@@ -80,7 +98,8 @@ create_cso_v_split_plot <- function(data, comparisons,
     theme_pubr(base_size = 14) +
     theme(
       legend.position = "none",
-      axis.title = element_text(face = "bold")
+      axis.title = element_text(face = "bold"),
+      axis.text.x = element_text(angle = 45, hjust = 1)
     ) + facet_wrap(~dataset, scales=scales,nrow=2,
                    labeller = labeller(dataset = ds_name_map)) +
     ylim(0,0.22) + 
@@ -108,7 +127,7 @@ create_cso_v_sp_plot <- function(data,my_colors) {
     
     scale_color_manual(
       name = "Split type",
-      breaks = c("random", "scaffold", "umap", "spectra"),
+      breaks = c("Random", "Scaffold", "UMAP", "SPECTRA"),
       values = my_colors) +
     
     labs(
@@ -129,6 +148,7 @@ create_cso_v_sp_plot <- function(data,my_colors) {
 create_performance_v_cso_plot <- function(data,metric_name,model_choice,
                                           my_colors,
                                           nrow=2) {
+  data$split_type <- split_type_map[data$split_type]
   p <- ggplot(data, 
          aes(x = cso_mean, y = perf_mean)) +
     geom_point(aes(color = split_type, shape = split_type), size = 2) +
@@ -140,10 +160,10 @@ create_performance_v_cso_plot <- function(data,metric_name,model_choice,
     scale_shape_manual(
       name = "Split type",
       values = c(
-        spectra = 16,
-        random = 15,
-        scaffold = 17,
-        umap = 18
+        SPECTRA = 16,
+        Random = 15,
+        Scaffold = 17,
+        UMAP = 18
       )
     ) +
     scale_color_manual(
@@ -151,7 +171,7 @@ create_performance_v_cso_plot <- function(data,metric_name,model_choice,
       values=my_colors
     ) +
     labs(
-      x = "Cross-split overlap",
+      x = "Cross-Split Overlap",
       y = metric_name
     ) +
     
@@ -163,4 +183,11 @@ create_performance_v_cso_plot <- function(data,metric_name,model_choice,
     ) + 
     ggtitle(model_choice)
   print(p)
+  if (metric_name == "RMSE") {
+    ggsave(paste0("./plots/",model_choice, "_perf_rmse_vs_cso.pdf"), 
+           plot = p, width = 8, height = 3, units = "in")
+  } else {
+    ggsave(paste0("./plots/",model_choice, "_perf_auc_vs_cso.pdf"), 
+           plot = p, width = 8, height = 5, units = "in")
+  }
 }
