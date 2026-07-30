@@ -174,55 +174,57 @@ create_cso_v_sp_plot(cso_vs_sp_df, my_colors)
 
 
 #### PERFORMANCE VS CSO
-perf_vs_cso_df <- data.frame(
-  dataset=character(0),
-  split_type=character(0),
-  cso_mean=numeric(0),
-  cso_sd=numeric(0),
-  metric_mean=numeric(0),
-  metric_sd=numeric(0)
-)
-
-for (dataset in datasets) {
-  ## collate all the info, starting from the CSOs for the spectra splits
-  tmp_df1 <- data.frame(cso_dat[grep(paste0(dataset, "_spec"), cso_dat$index),] %>%
-                         group_by(SP) %>%
-                         dplyr::summarise(cso_mean = mean(cso),
-                                   cso_sd = sd(cso)))
+for (model_choice in c("chemprop","RF","XGB","SVM","KRR","LinReg","LogReg")) {
+  perf_vs_cso_df <- data.frame(
+    dataset=character(0),
+    split_type=character(0),
+    cso_mean=numeric(0),
+    cso_sd=numeric(0),
+    metric_mean=numeric(0),
+    metric_sd=numeric(0)
+  )
   
-  tmp_df2 <- data.frame(perf_dat[which(perf_dat$dataset == dataset & 
-                                         perf_dat$split_type == "spectra_tanimoto" & 
-                                         perf_dat$model == "chemprop"),] %>%
-                        group_by(SP) %>%
-                          dplyr::summarise(perf_mean = mean(metric), perf_sd = sd(metric)))
-  
-  tmp_df <- dplyr::full_join(tmp_df1, tmp_df2, by = "SP")
-  tmp_df$split_type = "spectra"
-  
-  for (split_type in c("random","scaffold","umap")) {
-    cso_mean <- mean(cso_dat[grep(paste0(dataset, "_", split_type), cso_dat$index),"cso"])
-    cso_sd <- sd(cso_dat[grep(paste0(dataset, "_", split_type), cso_dat$index),"cso"])
+  for (dataset in datasets) {
+    ## collate all the info, starting from the CSOs for the spectra splits
+    tmp_df1 <- data.frame(cso_dat[grep(paste0(dataset, "_spec"), cso_dat$index),] %>%
+                           group_by(SP) %>%
+                           dplyr::summarise(cso_mean = mean(cso),
+                                     cso_sd = sd(cso)))
     
-    perf_mean <- mean(perf_dat[which(perf_dat$dataset == dataset & 
-                                       perf_dat$split_type == split_type & 
-                                       perf_dat$model == "chemprop"), "metric"])
-    perf_sd <- sd(perf_dat[which(perf_dat$dataset == dataset & 
-                                       perf_dat$split_type == split_type & 
-                                       perf_dat$model == "chemprop"), "metric"])
+    tmp_df2 <- data.frame(perf_dat[which(perf_dat$dataset == dataset & 
+                                           perf_dat$split_type == "spectra_tanimoto" & 
+                                           perf_dat$model == model_choice),] %>%
+                          group_by(SP) %>%
+                            dplyr::summarise(perf_mean = mean(metric), perf_sd = sd(metric)))
     
-    tmp_df <- rbind(tmp_df, data.frame(
-      SP=NA,cso_mean=cso_mean, cso_sd=cso_sd,
-      perf_mean = perf_mean, perf_sd=perf_sd,
-      split_type=split_type
-    ))
+    tmp_df <- dplyr::full_join(tmp_df1, tmp_df2, by = "SP")
+    tmp_df$split_type = "spectra"
+    
+    for (split_type in c("random","scaffold","umap")) {
+      cso_mean <- mean(cso_dat[grep(paste0(dataset, "_", split_type), cso_dat$index),"cso"])
+      cso_sd <- sd(cso_dat[grep(paste0(dataset, "_", split_type), cso_dat$index),"cso"])
+      
+      perf_mean <- mean(perf_dat[which(perf_dat$dataset == dataset & 
+                                         perf_dat$split_type == split_type & 
+                                         perf_dat$model == model_choice), "metric"])
+      perf_sd <- sd(perf_dat[which(perf_dat$dataset == dataset & 
+                                         perf_dat$split_type == split_type & 
+                                         perf_dat$model == model_choice), "metric"])
+      
+      tmp_df <- rbind(tmp_df, data.frame(
+        SP=NA,cso_mean=cso_mean, cso_sd=cso_sd,
+        perf_mean = perf_mean, perf_sd=perf_sd,
+        split_type=split_type
+      ))
+    }
+    
+    tmp_df$dataset <- dataset
+    
+    perf_vs_cso_df <- rbind(perf_vs_cso_df, tmp_df)
   }
   
-  tmp_df$dataset <- dataset
-  
-  perf_vs_cso_df <- rbind(perf_vs_cso_df, tmp_df)
+  create_performance_v_cso_plot(perf_vs_cso_df[which(perf_vs_cso_df$dataset %in% reg_datasets),],
+                                "AUC",model_choice,my_colors)
+  create_performance_v_cso_plot(perf_vs_cso_df[which(perf_vs_cso_df$dataset %in% class_datasets),],
+                                "RMSE",model_choice,my_colors,nrow=1)
 }
-
-create_performance_v_cso_plot(perf_vs_cso_df[which(perf_vs_cso_df$dataset %in% reg_datasets),],
-                              "AUC",my_colors)
-create_performance_v_cso_plot(perf_vs_cso_df[which(perf_vs_cso_df$dataset %in% class_datasets),],
-                              "RMSE",my_colors,nrow=1)

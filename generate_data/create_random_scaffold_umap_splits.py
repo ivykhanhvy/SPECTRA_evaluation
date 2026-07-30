@@ -161,6 +161,7 @@ if __name__ == "__main__":
     base_path = '..'
     #Uncomment the desired split generation functions below.
     for dataset_name in ['bace', 'bbbp', 'clintox', 'delaney', 'freesolv', 'lipo', 'sider', 'tox21']:
+        pass
         #generate_random_splits(dataset_name, base_path)
         #generate_scaffold_splits(dataset_name, base_path)
         #generate_umap_splits(dataset_name, base_path)

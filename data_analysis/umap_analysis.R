@@ -3,6 +3,12 @@ source("./data_analysis/helpers.R")
 perf_dat <- read.csv("./data_analysis/all_split_performance_data.csv")
 cso_dat <- read.csv("./data_analysis/all_split_size_cso_data.csv")
 
+ds_name_map = c(
+  "bace"="BACE", "bbbp"="BBBP", "clintox"="ClinTox","delaney"="ESOL",
+  "freesolv"="FreeSolv", "lipo"="Lipophilicity","sider"="SIDER","tox21"="Tox21"
+)
+
+
 cso_dat$dataset <- sapply(strsplit(cso_dat$index,"_"), function(x){x[1]})
 cso_dat$split_type <- sapply(strsplit(cso_dat$index,"_"), function(x){x[2]})
 
@@ -59,7 +65,7 @@ plot(cso ~ sil_score, data=umap_subset,
 #         lwd=2)
 #}
 legend("bottomright", 
-       legend = names(color_map), 
+       legend = ds_name_map[names(color_map)], 
        col = color_map, 
        pch = c(19), 
        #bty = "n", 
@@ -69,18 +75,3 @@ legend("bottomright",
        horiz = F , 
        inset = c(0.1, 0.1))
 cor.test(umap_subset$cso, umap_subset$sil_score, method="spearman")
-
-# plot(metric ~ sil_score, data=perf_dat_chemprop_umap_only[
-#   which(perf_dat_chemprop_umap_only$dataset %in% class_datasets),
-# ],
-#      col=color_map[dataset],pch=19,cex=1.25)
-# legend("topright", 
-#        legend = names(color_map), 
-#        col = color_map, 
-#        pch = c(19), 
-#        #bty = "n", 
-#        pt.cex = 1, 
-#        cex = 0.8, 
-#        text.col = "black", 
-#        horiz = F , 
-#        inset = c(0.1, 0.1))

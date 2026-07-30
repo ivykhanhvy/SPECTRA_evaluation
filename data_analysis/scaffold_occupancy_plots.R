@@ -3,9 +3,16 @@ library(jsonlite)
 datasets = c(
   "bace","bbbp","clintox","delaney","freesolv","lipo","sider","tox21"
 )
-
 class_datasets = c("delaney", "freesolv", "lipo")
 
+ds_name_map = c(
+  "bace"="BACE", "bbbp"="BBBP", "clintox"="ClinTox","delaney"="ESOL",
+  "freesolv"="FreeSolv", "lipo"="Lipophilicity","sider"="SIDER","tox21"="Tox21"
+)
+
+
+
+#### GATHERING DATA + EXPLORATORY PLOTS
 class_aucs = c()
 reg_aucs = c()
 
@@ -91,7 +98,7 @@ for (dataset in datasets) {
 
 
 
-##### PLOTS FOR PAPER 
+##### PLOTS FOR MANUSCRIPT 
 # Okabe-Ito palette
 color_map = c(
   "bace"="#E69F00","bbbp"="#56B4E9","clintox"="#009E73",
@@ -113,10 +120,8 @@ color_map = c(
 #        text.col = "black", 
 #        horiz = F , 
 #        inset = c(0.1, 0.1))
-
-
-cor.test(c(rep(reg_avg_occ,each=5), rep(class_avg_occ,each=5)), 
-         c(reg_changes, -1*class_changes), method="spearman")
+# cor.test(c(rep(reg_avg_occ,each=5), rep(class_avg_occ,each=5)), 
+#         c(reg_changes, -1*class_changes), method="spearman")
 
 
 
@@ -129,7 +134,7 @@ plot(c(reg_csos, class_csos) ~ c(reg_avg_occ, class_avg_occ),
      xlab="Mean scaffold group occupancy", 
      ylab="Cross-Split Overlap")
 legend("topright", 
-       legend = names(color_map), 
+       legend = ds_name_map[names(color_map)], 
        col = color_map, 
        pch = c(19), 
        #bty = "n", 
@@ -143,4 +148,27 @@ legend("topright",
 cor.test(c(reg_csos, class_csos), c(reg_avg_occ, class_avg_occ), method="spearman")
 
 
+### Check trend + correlation without SIDER dataset
+y_data = c(reg_csos, class_csos)
+x_data = c(reg_avg_occ, class_avg_occ)
+names(x_data) <- datasets
+names(y_data) <- datasets
+plot(y_data[-which(names(y_data) == "sider")] ~ x_data[-which(names(x_data) == "sider")],
+     col=color_map[datasets[-which(datasets == "sider")]],
+     pch=19,cex=1.25,
+     xlab="Mean scaffold group occupancy", 
+     ylab="Cross-Split Overlap")
+legend("topright", 
+       legend = ds_name_map[names(color_map)], 
+       col = color_map, 
+       pch = c(19), 
+       #bty = "n", 
+       pt.cex = 1, 
+       cex = 0.8, 
+       text.col = "black", 
+       horiz = F , 
+       inset = c(0.1, 0.1))
 
+
+cor.test(x_data[-which(names(x_data) == "sider")], 
+         y_data[-which(names(y_data) == "sider")], method="spearman")
